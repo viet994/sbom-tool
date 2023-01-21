@@ -13,21 +13,23 @@ namespace Microsoft.Sbom.Api.Tests.Config
     public class ConfigurationCLITests
     {
         private Mock<IConfiguration> mockConfiguration;
+        private Mock<IContext> mockContext;
 
         [TestInitialize]
         public void Setup()
         {
             mockConfiguration = new Mock<IConfiguration>();
+            mockContext = new Mock<IContext>(); // TODO: delete?
         }
 
         [TestMethod]
         public void Configuration_CommandLineParams()
         {
             // A property that is not a ComponentDetectorArgument
-            mockConfiguration.SetupProperty(c => c.BuildComponentPath, new ConfigurationSetting<string> { Value = "build_component_path" });
+            mockContext.SetupGet(c => c.BuildComponentPath).Returns(new ConfigurationSetting<string> { Value = "build_component_path" });
 
             // A named ComponentDetectorArgument
-            mockConfiguration.SetupProperty(c => c.DockerImagesToScan, new ConfigurationSetting<string> { Value = "the_docker_image" });
+            mockContext.SetupGet(c => c.DockerImagesToScan).Returns(new ConfigurationSetting<string> { Value = "the_docker_image" });
 
             // An unnamed ComponentDetectorArgument
             mockConfiguration.SetupProperty(c => c.AdditionalComponentDetectorArgs, new ConfigurationSetting<string> { Value = "--arg1 val1 --arg2 val2" });
@@ -40,9 +42,9 @@ namespace Microsoft.Sbom.Api.Tests.Config
                 .AddArg("defaultArg1", "val1")
                 .AddArg("defaultArg2", "val2");
 
-            var commandLineParams = config.ToComponentDetectorCommandLineParams(argBuilder);
+            var commandLineParams = config.ToComponentDetectorCommandLineParams(argBuilder, mockContext.Object);
 
-            Assert.AreEqual("scan --Verbosity Quiet --SourceDirectory X:/ --DetectorArgs Timeout=900 --defaultArg1 val1 --defaultArg2 val2 --DockerImagesToScan the_docker_image --arg1 val1 --arg2 val2", string.Join(" ", commandLineParams));
+            Assert.AreEqual("scan --Verbosity Quiet --SourceDirectory X:/ --DetectorArgs Timeout=900 --defaultArg1 val1 --defaultArg2 val2 --arg1 val1 --arg2 val2 --DockerImagesToScan the_docker_image", string.Join(" ", commandLineParams));
         }
 
         [TestMethod]
@@ -56,7 +58,7 @@ namespace Microsoft.Sbom.Api.Tests.Config
                 .AddArg("defaultArg1", "val1")
                 .AddArg("defaultArg2", "val2");
 
-            var commandLineParams = config.ToComponentDetectorCommandLineParams(argBuilder);
+            var commandLineParams = config.ToComponentDetectorCommandLineParams(argBuilder, mockContext.Object);
 
             Assert.AreEqual("scan --Verbosity Quiet --SourceDirectory X:/ --DetectorArgs Timeout=900 --defaultArg1 val1 --defaultArg2 val2", string.Join(" ", commandLineParams));
         }

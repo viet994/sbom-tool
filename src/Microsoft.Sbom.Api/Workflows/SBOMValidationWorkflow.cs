@@ -40,6 +40,7 @@ namespace Microsoft.Sbom.Api.Workflows
         private readonly ISignValidationProvider signValidationProvider;
         private readonly ManifestFileFilterer manifestFileFilterer;
         private readonly IRecorder recorder;
+        private readonly IContext context;
 
         public SBOMValidationWorkflow(
             IConfiguration configuration,
@@ -54,7 +55,8 @@ namespace Microsoft.Sbom.Api.Workflows
             ILogger log,
             ISignValidationProvider signValidationProvider,
             ManifestFileFilterer manifestFileFilterer,
-            IRecorder recorder)
+            IRecorder recorder,
+            IContext context)
         {
             this.configuration = configuration;
             this.directoryWalker = directoryWalker;
@@ -73,6 +75,8 @@ namespace Microsoft.Sbom.Api.Workflows
             {
                 this.fileHasher.ManifestData = manifestData;
             }
+
+            this.context = context;
         }
 
         public async Task<bool> RunAsync()
@@ -90,7 +94,7 @@ namespace Microsoft.Sbom.Api.Workflows
                     IList<ChannelReader<FileValidationResult>> results = new List<ChannelReader<FileValidationResult>>();
 
                     // Validate signature
-                    if (configuration.ValidateSignature != null && configuration.ValidateSignature.Value)
+                    if (context.ValidateSignature != null && context.ValidateSignature.Value)
                     {
                         var signValidator = signValidationProvider.Get();
 
@@ -110,7 +114,7 @@ namespace Microsoft.Sbom.Api.Workflows
 
                     // Workflow
                     // Read all files
-                    var (files, dirErrors) = directoryWalker.GetFilesRecursively(configuration.BuildDropPath.Value);
+                    var (files, dirErrors) = directoryWalker.GetFilesRecursively(context.BuildDropPath.Value);
                     errors.Add(dirErrors);
 
                     // Filter root path matching files from the manifest map.
@@ -193,7 +197,7 @@ namespace Microsoft.Sbom.Api.Workflows
                     validFailures = failures.Where(a => a.ErrorType != ErrorType.ManifestFolder
                                                  && a.ErrorType != ErrorType.FilteredRootPath);
 
-                    if (configuration.IgnoreMissing.Value)
+                    if (context.IgnoreMissing.Value)
                     {
                         log.Warning("Not including missing files on disk as -IgnoreMissing switch is on.");
                         validFailures = validFailures.Where(a => a.ErrorType != ErrorType.MissingFile);

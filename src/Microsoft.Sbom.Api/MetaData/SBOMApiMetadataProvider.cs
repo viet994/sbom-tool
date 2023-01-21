@@ -19,11 +19,13 @@ namespace Microsoft.Sbom.Api.Metadata
     {
         private readonly SBOMMetadata metadata;
         private readonly IConfiguration configuration;
+        private readonly IContext context;
 
-        public SBOMApiMetadataProvider(SBOMMetadata metadata, IConfiguration configuration)
+        public SBOMApiMetadataProvider(SBOMMetadata metadata, IConfiguration configuration, IContext context)
         {
             this.metadata = metadata ?? throw new ArgumentNullException(nameof(metadata));
             this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+            this.context = context ?? throw new ArgumentNullException(nameof(context));
             PopulateMetadata();
         }
 
@@ -47,11 +49,11 @@ namespace Microsoft.Sbom.Api.Metadata
 
         public string GetDocumentNamespaceUri()
         {
-            var nsUniquePart = Uri.EscapeDataString(configuration.NamespaceUriUniquePart?.Value ?? IdentifierUtils.GetShortGuid(Guid.NewGuid()));
+            var nsUniquePart = Uri.EscapeDataString(context.NamespaceUriUniquePart?.Value ?? IdentifierUtils.GetShortGuid(Guid.NewGuid()));
             var packageName = Uri.EscapeDataString(MetadataDictionary[MetadataKey.PackageName] as string);
             var packageVersion = Uri.EscapeDataString(MetadataDictionary[MetadataKey.PackageVersion] as string);
 
-            return string.Join("/", configuration.NamespaceUriBase.Value, packageName, packageVersion, nsUniquePart);
+            return string.Join("/", context.NamespaceUriBase.Value, packageName, packageVersion, nsUniquePart);
         }
 
         private void PopulateMetadata()

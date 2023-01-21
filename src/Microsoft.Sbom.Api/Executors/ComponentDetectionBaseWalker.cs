@@ -27,6 +27,7 @@ namespace Microsoft.Sbom.Api.Executors
         private readonly ILogger log;
         private readonly ComponentDetectorCachedExecutor componentDetector;
         private readonly IConfiguration configuration;
+        private readonly IContext context;
         private readonly VerbosityMode verbosity;
 
         private ComponentDetectionCliArgumentBuilder cliArgumentBuilder;
@@ -35,7 +36,8 @@ namespace Microsoft.Sbom.Api.Executors
             ILogger log,
             ComponentDetectorCachedExecutor componentDetector,
             IConfiguration configuration,
-            ISbomConfigProvider sbomConfigs)
+            ISbomConfigProvider sbomConfigs,
+            IContext context)
         {
             if (sbomConfigs is null)
             {
@@ -45,6 +47,7 @@ namespace Microsoft.Sbom.Api.Executors
             this.log = log ?? throw new ArgumentNullException(nameof(log));
             this.componentDetector = componentDetector ?? throw new ArgumentNullException(nameof(componentDetector));
             this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+            this.context = context;
 
             verbosity = configuration.Verbosity.Value switch
             {
@@ -84,7 +87,7 @@ namespace Microsoft.Sbom.Api.Executors
             async Task Scan(string path)
             {
                 cliArgumentBuilder.SourceDirectory(buildComponentDirPath);
-                var cmdLineParams = configuration.ToComponentDetectorCommandLineParams(cliArgumentBuilder);
+                var cmdLineParams = configuration.ToComponentDetectorCommandLineParams(cliArgumentBuilder, context);
 
                 var scanResult = await componentDetector.ScanAsync(cmdLineParams);
 

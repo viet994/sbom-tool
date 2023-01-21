@@ -4,6 +4,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Intrinsics.Arm;
+using AutoMapper.Configuration;
 using Microsoft.Sbom.Api.Utils;
 using Microsoft.Sbom.Common.Config;
 using Microsoft.Sbom.Contracts;
@@ -12,13 +14,14 @@ using Microsoft.Sbom.Extensions.Entities;
 using Serilog.Events;
 using ApiConstants = Microsoft.Sbom.Api.Utils.Constants;
 using Constants = Microsoft.Sbom.Common.Constants;
+using IConfiguration = Microsoft.Sbom.Common.Config.IConfiguration;
 
 namespace Microsoft.Sbom.Api.Config
 {
     /// <summary>
     /// Builds the configuration object for the SBOM api.
     /// </summary>
-    static internal class ApiConfigurationBuilder
+    static public class ApiConfigurationBuilder
     {
         /// <summary>
         /// Gets a generate configuration.
@@ -32,7 +35,7 @@ namespace Microsoft.Sbom.Api.Config
         /// <param name="runtimeConfiguration"></param>
         /// <param name="verbosity"></param>
         /// <returns>A generate configuration.</returns>
-        static internal Configuration GetConfiguration(
+        static public IConfiguration GetGenerationConfiguration(
             string rootPath,
             string manifestDirPath,
             IEnumerable<SBOMFile> files,
@@ -55,41 +58,42 @@ namespace Microsoft.Sbom.Api.Config
 
             RuntimeConfiguration sanitizedRuntimeConfiguration = SanitiseRuntimeConfiguration(runtimeConfiguration);
 
-            var configuration = new Configuration();
-            configuration.BuildDropPath = GetConfigurationSetting(rootPath);
-            configuration.ManifestDirPath = GetConfigurationSetting(manifestDirPath);
+            IConfiguration configuration = new Configuration();
+            //configuration.BuildDropPath = GetConfigurationSetting(rootPath);
+            //configuration.ManifestDirPath = GetConfigurationSetting(manifestDirPath);
             configuration.ManifestToolAction = ManifestToolActions.Generate;
-            configuration.PackageName = GetConfigurationSetting(metadata.PackageName);
-            configuration.PackageVersion = GetConfigurationSetting(metadata.PackageVersion);
-            configuration.PackageSupplier = GetConfigurationSetting(metadata.PackageSupplier);
+            //configuration.PackageName = GetConfigurationSetting(metadata.PackageName);
+            //configuration.PackageVersion = GetConfigurationSetting(metadata.PackageVersion);
+            //configuration.PackageSupplier = GetConfigurationSetting(metadata.PackageSupplier);
             configuration.Parallelism = GetConfigurationSetting(sanitizedRuntimeConfiguration.WorkflowParallelism);
-            configuration.GenerationTimestamp = GetConfigurationSetting(sanitizedRuntimeConfiguration.GenerationTimestamp);
-            configuration.NamespaceUriBase = GetConfigurationSetting(sanitizedRuntimeConfiguration.NamespaceUriBase);
-            configuration.NamespaceUriUniquePart = GetConfigurationSetting(sanitizedRuntimeConfiguration.NamespaceUriUniquePart);
+            //configuration.GenerationTimestamp = GetConfigurationSetting(sanitizedRuntimeConfiguration.GenerationTimestamp);
+            //configuration.NamespaceUriBase = GetConfigurationSetting(sanitizedRuntimeConfiguration.NamespaceUriBase);
+            //configuration.NamespaceUriUniquePart = GetConfigurationSetting(sanitizedRuntimeConfiguration.NamespaceUriUniquePart);
             configuration.FollowSymlinks = GetConfigurationSetting(sanitizedRuntimeConfiguration.FollowSymlinks);
             configuration.DeleteManifestDirIfPresent = GetConfigurationSetting(sanitizedRuntimeConfiguration.DeleteManifestDirectoryIfPresent);
+            configuration.ManifestToolAction = ManifestToolActions.Generate;
 
             SetVerbosity(sanitizedRuntimeConfiguration, configuration);
 
-            if (packages != null)
-            {
-                configuration.PackagesList = GetConfigurationSetting(packages);
-            }
+            //if (packages != null)
+            //{
+            //    configuration.PackagesList = GetConfigurationSetting(packages);
+            //}
 
-            if (files != null)
-            {
-                configuration.FilesList = GetConfigurationSetting(files);
-            }
+            //if (files != null)
+            //{
+            //    configuration.FilesList = GetConfigurationSetting(files);
+            //}
 
-            if (externalDocumentReferenceListFile != null)
-            {
-                configuration.ExternalDocumentReferenceListFile = GetConfigurationSetting(externalDocumentReferenceListFile);
-            }
+            //if (externalDocumentReferenceListFile != null)
+            //{
+            //    configuration.ExternalDocumentReferenceListFile = GetConfigurationSetting(externalDocumentReferenceListFile);
+            //}
 
-            if (!string.IsNullOrWhiteSpace(componentPath))
-            {
-                configuration.BuildComponentPath = GetConfigurationSetting(componentPath);
-            }
+            //if (!string.IsNullOrWhiteSpace(componentPath))
+            //{
+            //    configuration.BuildComponentPath = GetConfigurationSetting(componentPath);
+            //}
 
             // Convert sbom specifications to manifest info.
             if (specifications != null)
@@ -100,7 +104,39 @@ namespace Microsoft.Sbom.Api.Config
             return configuration;
         }
 
-        static public Configuration GetConfiguration(
+        public static IConfiguration GetGenerationConfiguration(
+            string buildDropPath,
+            string outputPath,
+            IList<SBOMSpecification> specifications,
+            string manifestDirPath,
+            bool validateSignature,
+            bool ignoreMissing,
+            string rootPathFilter,
+            RuntimeConfiguration runtimeConfiguration,
+            string packageName,
+            string packageVersion,
+            string packageSupplier,
+            string namespaceBaseUri)
+        {
+            var config = GetConfiguration(
+                buildDropPath,
+                outputPath,
+                specifications,
+                manifestDirPath,
+                validateSignature,
+                ignoreMissing,
+                rootPathFilter,
+                runtimeConfiguration,
+                ManifestToolActions.Validate);
+            //config.PackageName = GetConfigurationSetting(packageName);
+            //config.PackageVersion = GetConfigurationSetting(packageVersion);
+            //config.PackageSupplier = GetConfigurationSetting(packageSupplier);
+            //config.NamespaceUriBase = GetConfigurationSetting(namespaceBaseUri);
+            config.ManifestToolAction = ManifestToolActions.Generate;
+            return config;
+        }
+
+        public static IConfiguration GetValidationConfiguration(
             string buildDropPath,
             string outputPath,
             IList<SBOMSpecification> specifications,
@@ -111,6 +147,36 @@ namespace Microsoft.Sbom.Api.Config
             string rootPathFilter,
             RuntimeConfiguration runtimeConfiguration)
         {
+            var config = GetConfiguration(
+                buildDropPath,
+                outputPath,
+                specifications,
+                manifestDirPath,
+                validateSignature,
+                ignoreMissing,
+                rootPathFilter,
+                runtimeConfiguration,
+                ManifestToolActions.Validate);
+            config.HashAlgorithm = GetConfigurationSetting(algorithmName ?? AlgorithmName.SHA256);
+            return config;
+        }
+
+        private static IConfiguration GetConfiguration(
+            string buildDropPath,
+            string outputPath,
+            IList<SBOMSpecification> specifications,
+            string manifestDirPath,
+            bool validateSignature,
+            bool ignoreMissing,
+            string rootPathFilter,
+            RuntimeConfiguration runtimeConfiguration,
+            ManifestToolActions manifestToolAction)
+        {
+            // TODO: is any of this necessary?
+            ContextAdapter.SetBuildDropPath(new (buildDropPath));
+            ContextAdapter.SetManifestDirPath(new (manifestDirPath));
+            ContextAdapter.SetOutputPath(new (outputPath));
+
             if (string.IsNullOrWhiteSpace(buildDropPath))
             {
                 throw new ArgumentException($"'{nameof(buildDropPath)}' cannot be null or whitespace.", nameof(buildDropPath));
@@ -128,15 +194,15 @@ namespace Microsoft.Sbom.Api.Config
 
             var sanitizedRuntimeConfiguration = SanitiseRuntimeConfiguration(runtimeConfiguration);
 
-            var configuration = new Configuration();
-            configuration.BuildDropPath = GetConfigurationSetting(buildDropPath);
-            configuration.ManifestDirPath = GetConfigurationSetting(manifestDirPath);
-            configuration.ManifestToolAction = ManifestToolActions.Validate;
-            configuration.OutputPath = GetConfigurationSetting(outputPath);
-            configuration.HashAlgorithm = GetConfigurationSetting(algorithmName ?? AlgorithmName.SHA256);
-            configuration.RootPathFilter = GetConfigurationSetting(rootPathFilter);
-            configuration.ValidateSignature = GetConfigurationSetting(validateSignature);
-            configuration.IgnoreMissing = GetConfigurationSetting(ignoreMissing);
+            IConfiguration configuration = new Configuration();
+            configuration.HashAlgorithm = GetConfigurationSetting(AlgorithmName.SHA256);
+            //configuration.BuildDropPath = GetConfigurationSetting(buildDropPath);
+            //configuration.ManifestDirPath = GetConfigurationSetting(manifestDirPath);
+            configuration.ManifestToolAction = manifestToolAction;
+            //configuration.OutputPath = GetConfigurationSetting(outputPath);
+            //configuration.RootPathFilter = GetConfigurationSetting(rootPathFilter);
+            //configuration.ValidateSignature = GetConfigurationSetting(validateSignature);
+            //configuration.IgnoreMissing = GetConfigurationSetting(ignoreMissing);
             configuration.Parallelism = GetConfigurationSetting(sanitizedRuntimeConfiguration.WorkflowParallelism);
             configuration.ManifestInfo = ConvertSbomSpecificationToManifestInfo(specifications);
 
@@ -171,7 +237,7 @@ namespace Microsoft.Sbom.Api.Config
             return GetConfigurationSetting(manifestInfos);
         }
 
-        static private void SetVerbosity(RuntimeConfiguration sanitizedRuntimeConfiguration, Configuration configuration)
+        static private void SetVerbosity(RuntimeConfiguration sanitizedRuntimeConfiguration, IConfiguration configuration)
         {
             switch (sanitizedRuntimeConfiguration.Verbosity)
             {
@@ -199,14 +265,16 @@ namespace Microsoft.Sbom.Api.Config
             }
         }
 
-        static private ConfigurationSetting<T> GetConfigurationSetting<T>(T value)
+        static private ConfigurationSetting<T> GetConfigurationSetting<T>(T value) => new ()
         {
-            return new ConfigurationSetting<T>
-            {
-                Value = value,
-                Source = SettingSource.SBOMApi
-            };
-        }
+            Value = value,
+            Source = SettingSource.SBOMApi
+        };
+
+
+
+
+
 
         static private RuntimeConfiguration SanitiseRuntimeConfiguration(RuntimeConfiguration runtimeConfiguration)
         {
@@ -215,7 +283,7 @@ namespace Microsoft.Sbom.Api.Config
                 runtimeConfiguration = new RuntimeConfiguration
                 {
                     WorkflowParallelism = Constants.DefaultParallelism,
-                    Verbosity = System.Diagnostics.Tracing.EventLevel.Warning,
+                    Verbosity = System.Diagnostics.Tracing.EventLevel.Verbose,
                     DeleteManifestDirectoryIfPresent = false,
                     FollowSymlinks = true
                 };

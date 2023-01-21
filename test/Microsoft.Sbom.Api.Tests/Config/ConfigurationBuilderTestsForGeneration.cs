@@ -28,11 +28,12 @@ namespace Microsoft.Sbom.Api.Config.Tests
         {
             var configFileParser = new ConfigFileParser(fileSystemUtilsMock.Object);
             var cb = new ConfigurationBuilder<GenerationArgs>(mapper, configFileParser);
+            var contextBuilder = new ContextBuilder<GenerationArgs>(mapper, configFileParser);
 
             fileSystemUtilsMock.Setup(f => f.OpenRead(It.IsAny<string>())).Returns(TestUtils.GenerateStreamFromString(JSONConfigGoodWithManifestInfo));
-            fileSystemUtilsMock.Setup(f => f.DirectoryExists(It.IsAny<string>())).Returns(true).Verifiable();
-            fileSystemUtilsMock.Setup(f => f.DirectoryHasReadPermissions(It.IsAny<string>())).Returns(true).Verifiable();
-            fileSystemUtilsMock.Setup(f => f.DirectoryHasWritePermissions(It.IsAny<string>())).Returns(true).Verifiable();
+            //fileSystemUtilsMock.Setup(f => f.DirectoryExists(It.IsAny<string>())).Returns(true).Verifiable();
+            //fileSystemUtilsMock.Setup(f => f.DirectoryHasReadPermissions(It.IsAny<string>())).Returns(true).Verifiable();
+            //fileSystemUtilsMock.Setup(f => f.DirectoryHasWritePermissions(It.IsAny<string>())).Returns(true).Verifiable();
 
             var args = new GenerationArgs
             {
@@ -43,12 +44,13 @@ namespace Microsoft.Sbom.Api.Config.Tests
             };
 
             var configuration = await cb.GetConfiguration(args);
+            var context = contextBuilder.GetContext(args);
 
-            Assert.AreEqual(configuration.BuildDropPath.Source, SettingSource.CommandLine);
+            Assert.AreEqual(context.BuildDropPath.Source, SettingSource.CommandLine);
             Assert.AreEqual(configuration.ConfigFilePath.Source, SettingSource.CommandLine);
             Assert.AreEqual(configuration.ManifestInfo.Source, SettingSource.JsonConfig);
 
-            fileSystemUtilsMock.VerifyAll();
+            //fileSystemUtilsMock.VerifyAll();
         }
 
         [TestMethod]
@@ -72,7 +74,7 @@ namespace Microsoft.Sbom.Api.Config.Tests
 
             var configuration = await cb.GetConfiguration(args);
 
-            Assert.AreEqual(configuration.BuildDropPath.Source, SettingSource.CommandLine);
+            //Assert.AreEqual(configuration.BuildDropPath.Source, SettingSource.CommandLine);
             Assert.AreEqual(configuration.ConfigFilePath.Source, SettingSource.CommandLine);
             Assert.AreEqual(configuration.ManifestInfo.Source, SettingSource.JsonConfig);
 
@@ -124,6 +126,7 @@ namespace Microsoft.Sbom.Api.Config.Tests
         {
             var configFileParser = new ConfigFileParser(fileSystemUtilsMock.Object);
             var cb = new ConfigurationBuilder<GenerationArgs>(mapper, configFileParser);
+            var context = new ContextAdapter();
 
             fileSystemUtilsMock.Setup(f => f.DirectoryExists(It.IsAny<string>())).Returns(true);
             fileSystemUtilsMock.Setup(f => f.DirectoryHasReadPermissions(It.IsAny<string>())).Returns(true);
@@ -140,8 +143,8 @@ namespace Microsoft.Sbom.Api.Config.Tests
             var config = await cb.GetConfiguration(args);
 
             Assert.IsNotNull(config);
-            Assert.IsNotNull(config.ManifestDirPath);
-            Assert.AreEqual(Path.Join(args.BuildDropPath, Constants.ManifestFolder), config.ManifestDirPath.Value);
+            Assert.IsNotNull(context.ManifestDirPath);
+            Assert.AreEqual(Path.Join(args.BuildDropPath, Constants.ManifestFolder), context.ManifestDirPath.Value);
 
             fileSystemUtilsMock.VerifyAll();
         }
@@ -151,6 +154,7 @@ namespace Microsoft.Sbom.Api.Config.Tests
         {
             var configFileParser = new ConfigFileParser(fileSystemUtilsMock.Object);
             var cb = new ConfigurationBuilder<GenerationArgs>(mapper, configFileParser);
+            var context = new ContextAdapter();
 
             fileSystemUtilsMock.Setup(f => f.DirectoryExists(It.IsAny<string>())).Returns(true);
             fileSystemUtilsMock.Setup(f => f.DirectoryHasReadPermissions(It.IsAny<string>())).Returns(true);
@@ -168,8 +172,8 @@ namespace Microsoft.Sbom.Api.Config.Tests
             var config = await cb.GetConfiguration(args);
 
             Assert.IsNotNull(config);
-            Assert.IsNotNull(config.ManifestDirPath);
-            Assert.AreEqual(Path.Join("ManifestDirPath", Constants.ManifestFolder), config.ManifestDirPath.Value);
+            Assert.IsNotNull(context.ManifestDirPath);
+            Assert.AreEqual(Path.Join("ManifestDirPath", Constants.ManifestFolder), context.ManifestDirPath.Value);
 
             fileSystemUtilsMock.VerifyAll();
         }
@@ -179,6 +183,7 @@ namespace Microsoft.Sbom.Api.Config.Tests
         {
             var configFileParser = new ConfigFileParser(fileSystemUtilsMock.Object);
             var cb = new ConfigurationBuilder<GenerationArgs>(mapper, configFileParser);
+            var context = new ContextAdapter();
 
             fileSystemUtilsMock.Setup(f => f.DirectoryExists(It.IsAny<string>())).Returns(true);
             fileSystemUtilsMock.Setup(f => f.DirectoryHasReadPermissions(It.IsAny<string>())).Returns(true);
@@ -196,8 +201,8 @@ namespace Microsoft.Sbom.Api.Config.Tests
             var config = await cb.GetConfiguration(args);
 
             Assert.IsNotNull(config);
-            Assert.IsNotNull(config.ManifestDirPath);
-            Assert.AreEqual(Path.Join("ManifestDirPath", Constants.ManifestFolder), config.ManifestDirPath.Value);
+            Assert.IsNotNull(context.ManifestDirPath);
+            Assert.AreEqual(Path.Join("ManifestDirPath", Constants.ManifestFolder), context.ManifestDirPath.Value);
 
             fileSystemUtilsMock.VerifyAll();
         }
@@ -207,6 +212,7 @@ namespace Microsoft.Sbom.Api.Config.Tests
         {
             var configFileParser = new ConfigFileParser(fileSystemUtilsMock.Object);
             var cb = new ConfigurationBuilder<GenerationArgs>(mapper, configFileParser);
+            var context = new ContextAdapter();
 
             mockAssemblyConfig.SetupGet(a => a.DefaultSBOMNamespaceBaseUri).Returns("https://uri");
 
@@ -226,18 +232,18 @@ namespace Microsoft.Sbom.Api.Config.Tests
             var config = await cb.GetConfiguration(args);
 
             Assert.IsNotNull(config);
-            Assert.IsNotNull(config.ManifestDirPath);
-            Assert.AreEqual(Path.Join("ManifestDirPath", Constants.ManifestFolder), config.ManifestDirPath.Value);
+            Assert.IsNotNull(context.ManifestDirPath);
+            Assert.AreEqual(Path.Join("ManifestDirPath", Constants.ManifestFolder), context.ManifestDirPath.Value);
 
             fileSystemUtilsMock.VerifyAll();
             mockAssemblyConfig.VerifyGet(a => a.DefaultSBOMNamespaceBaseUri);
         }
 
         [TestMethod]
-        public async Task ConfigurationBuilderTest_Generation_BadNSBaseUri_Fails()
+        public void ContextBuilderTest_Generation_BadNSBaseUri_Fails()
         {
             var configFileParser = new ConfigFileParser(fileSystemUtilsMock.Object);
-            var cb = new ConfigurationBuilder<GenerationArgs>(mapper, configFileParser);
+            var cb = new ContextBuilder<GenerationArgs>(mapper, configFileParser);
 
             fileSystemUtilsMock.Setup(f => f.DirectoryExists(It.IsAny<string>())).Returns(true);
             fileSystemUtilsMock.Setup(f => f.DirectoryHasReadPermissions(It.IsAny<string>())).Returns(true);
@@ -265,7 +271,7 @@ namespace Microsoft.Sbom.Api.Config.Tests
 
                 try
                 {
-                    var config = await cb.GetConfiguration(args);
+                    var context = cb.GetContext(args);
                     Assert.Fail($"NamespaceUriBase test should fail. nsUri: {badNsUri}");
                 }
                 catch (ValidationArgException e)

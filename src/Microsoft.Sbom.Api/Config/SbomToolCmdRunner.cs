@@ -29,10 +29,7 @@ namespace Microsoft.Sbom.Api.Config
         [ArgActionMethod]
         [ArgDescription("Validate a build artifact using the manifest. " +
             "Optionally also verify the signing certificate of the manfiest.")]
-        public ValidationArgs Validate(ValidationArgs validationArgs)
-        {
-            return validationArgs;
-        }
+        public ValidationArgs Validate(ValidationArgs validationArgs) => validationArgs;
 
         /// <summary>
         /// Generate a manifest.json and a bsi.json for all the files in the given build drop folder.
@@ -40,9 +37,6 @@ namespace Microsoft.Sbom.Api.Config
         [ArgActionMethod]
         [ArgDescription("Generate a SBOM for all the files " +
             "in the given build drop folder, and the packages in the components path.")]
-        public GenerationArgs Generate(GenerationArgs generationArgs)
-        {
-            return generationArgs;
-        }
+        public GenerationArgs Generate(GenerationArgs generationArgs) => generationArgs;
     }
 }

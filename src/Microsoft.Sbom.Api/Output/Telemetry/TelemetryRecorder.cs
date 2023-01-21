@@ -38,12 +38,14 @@ namespace Microsoft.Sbom.Api.Output.Telemetry
         public IConfiguration Configuration { get; }
 
         public ILogger Log { get; }
+        public IContext Context { get; }
 
-        public TelemetryRecorder(IFileSystemUtils fileSystemUtils, IConfiguration configuration, ILogger log)
+        public TelemetryRecorder(IFileSystemUtils fileSystemUtils, IConfiguration configuration, ILogger log, IContext context)
         {
             FileSystemUtils = fileSystemUtils ?? throw new ArgumentNullException(nameof(fileSystemUtils));
             Configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
             Log = log ?? throw new ArgumentNullException(nameof(log));
+            Context = context ?? throw new ArgumentNullException(nameof(context));
         }
 
         public IList<FileValidationResult> Errors => errors;
@@ -172,9 +174,9 @@ namespace Microsoft.Sbom.Api.Output.Telemetry
                 Log.Information("Finished execution of the {Action} workflow {@Telemetry}", Configuration.ManifestToolAction, telemetry);
 
                 // Write to file.
-                if (!string.IsNullOrWhiteSpace(Configuration.TelemetryFilePath?.Value))
+                if (!string.IsNullOrWhiteSpace(Context.TelemetryFilePath?.Value))
                 {
-                    using (var fileStream = FileSystemUtils.OpenWrite(Configuration.TelemetryFilePath.Value))
+                    using (var fileStream = FileSystemUtils.OpenWrite(Context.TelemetryFilePath.Value))
                     {
                         var options = new JsonSerializerOptions
                         {
@@ -184,7 +186,7 @@ namespace Microsoft.Sbom.Api.Output.Telemetry
                         }
                         };
                         await JsonSerializer.SerializeAsync(fileStream, telemetry, options);
-                        Log.Debug($"Wrote telemetry object to path {Configuration.TelemetryFilePath.Value}");
+                        Log.Debug($"Wrote telemetry object to path {Context.TelemetryFilePath.Value}");
                     }
                 }
             }

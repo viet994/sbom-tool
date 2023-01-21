@@ -25,19 +25,22 @@ namespace Microsoft.Sbom.Api.Executors
         private readonly IConfiguration configuration;
         private readonly ILogger log;
         private readonly IFileSystemUtils fileSystemUtils;
+        private readonly IContext context;
 
         public ManifestFileFilterer(
             ManifestData manifestData,
             IFilter<DownloadedRootPathFilter> rootPathFilter,
             IConfiguration configuration,
             ILogger log,
-            IFileSystemUtils fileSystemUtils)
+            IFileSystemUtils fileSystemUtils,
+            IContext context)
         {
             this.manifestData = manifestData ?? throw new ArgumentNullException(nameof(manifestData));
             this.rootPathFilter = rootPathFilter ?? throw new ArgumentNullException(nameof(rootPathFilter));
             this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
             this.log = log ?? throw new ArgumentNullException(nameof(log));
             this.fileSystemUtils = fileSystemUtils;
+            this.context = context;
         }
 
         public ChannelReader<FileValidationResult> FilterManifestFiles()
@@ -54,7 +57,7 @@ namespace Microsoft.Sbom.Api.Executors
                 {
                     try
                     {
-                        string file = fileSystemUtils.JoinPaths(configuration.BuildDropPath.Value, manifestFile);
+                        string file = fileSystemUtils.JoinPaths(context.BuildDropPath.Value, manifestFile);
                         if (!rootPathFilter.IsValid(file))
                         {
                             // This path is filtered, remove from the manifest map.

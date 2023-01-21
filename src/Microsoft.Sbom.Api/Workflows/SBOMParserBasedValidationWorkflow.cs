@@ -42,8 +42,9 @@ namespace Microsoft.Sbom.Api.Workflows
         private readonly ValidationResultGenerator validationResultGenerator;
         private readonly IOutputWriter outputWriter;
         private readonly IFileSystemUtils fileSystemUtils;
+        private readonly IContext context;
 
-        public SBOMParserBasedValidationWorkflow(IRecorder recorder, ISignValidationProvider signValidationProvider, ILogger log, IManifestParserProvider manifestParserProvider, IConfiguration configuration, ISbomConfigProvider sbomConfigs, FilesValidator filesValidator, ValidationResultGenerator validationResultGenerator, IOutputWriter outputWriter, IFileSystemUtils fileSystemUtils)
+        public SBOMParserBasedValidationWorkflow(IRecorder recorder, ISignValidationProvider signValidationProvider, ILogger log, IManifestParserProvider manifestParserProvider, IConfiguration configuration, ISbomConfigProvider sbomConfigs, FilesValidator filesValidator, ValidationResultGenerator validationResultGenerator, IOutputWriter outputWriter, IFileSystemUtils fileSystemUtils, IContext context)
         {
             this.recorder = recorder ?? throw new ArgumentNullException(nameof(recorder));
             this.signValidationProvider = signValidationProvider ?? throw new ArgumentNullException(nameof(signValidationProvider));
@@ -55,6 +56,7 @@ namespace Microsoft.Sbom.Api.Workflows
             this.validationResultGenerator = validationResultGenerator ?? throw new ArgumentNullException(nameof(validationResultGenerator));
             this.outputWriter = outputWriter ?? throw new ArgumentNullException(nameof(outputWriter));
             this.fileSystemUtils = fileSystemUtils ?? throw new ArgumentNullException(nameof(fileSystemUtils));
+            this.context = context ?? throw new ArgumentNullException(nameof(context));
         }
 
         public async Task<bool> RunAsync()
@@ -74,7 +76,7 @@ namespace Microsoft.Sbom.Api.Workflows
                     var sbomParser = manifestInterface.CreateParser(stream);
 
                     // Validate signature
-                    if (configuration.ValidateSignature != null && configuration.ValidateSignature.Value)
+                    if (context.ValidateSignature != null && context.ValidateSignature.Value)
                     {
                         var signValidator = signValidationProvider.Get();
 
@@ -146,7 +148,7 @@ namespace Microsoft.Sbom.Api.Workflows
                     
                     validFailures = fileValidationFailures.Where(f => !Constants.SkipFailureReportingForErrors.Contains(f.ErrorType));
 
-                    if (configuration.IgnoreMissing.Value)
+                    if (context.IgnoreMissing.Value)
                     {
                         log.Warning("Not including missing files on disk as -IgnoreMissing switch is on.");
                         validFailures = validFailures.Where(a => a.ErrorType != ErrorType.MissingFile);

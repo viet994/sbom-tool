@@ -47,6 +47,7 @@ namespace Microsoft.Sbom.Api.Workflows
         private readonly IOSUtils osUtils;
 
         private readonly IRecorder recorder;
+        private readonly IContext context;
 
         public SBOMGenerationWorkflow(
             IConfiguration configuration,
@@ -58,7 +59,8 @@ namespace Microsoft.Sbom.Api.Workflows
             IJsonArrayGenerator<ExternalDocumentReferenceGenerator> externalDocumentReferenceGenerator,
             ISbomConfigProvider sbomConfigs,
             IOSUtils osUtils,
-            IRecorder recorder)
+            IRecorder recorder,
+            IContext context)
         {
             this.fileSystemUtils = fileSystemUtils ?? throw new ArgumentNullException(nameof(fileSystemUtils));
             this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
@@ -70,10 +72,12 @@ namespace Microsoft.Sbom.Api.Workflows
             this.sbomConfigs = sbomConfigs ?? throw new ArgumentNullException(nameof(sbomConfigs));
             this.osUtils = osUtils ?? throw new ArgumentNullException(nameof(osUtils));
             this.recorder = recorder ?? throw new ArgumentNullException(nameof(recorder));
+            this.context = context ?? throw new ArgumentNullException(nameof(context));
         }
 
         public virtual async Task<bool> RunAsync()
         {
+            // validate/sanitize context (the things that the post-processor does)
             IList<FileValidationResult> validErrors = new List<FileValidationResult>();
             string sbomDir = null;
             bool deleteSBOMDir = false;
@@ -83,10 +87,10 @@ namespace Microsoft.Sbom.Api.Workflows
                 {
                     log.Debug("Starting SBOM generation workflow.");
 
-                    sbomDir = configuration.ManifestDirPath.Value;
+                    sbomDir = context.ManifestDirPath.Value;
 
                     // Don't remove directory if path is provided by user, there could be other files in that directory
-                    if (configuration.ManifestDirPath.IsDefaultSource)
+                    if (context.ManifestDirPath.IsDefaultSource)
                     {
                         RemoveExistingManifestDirectory();
                     }
@@ -157,7 +161,7 @@ namespace Microsoft.Sbom.Api.Workflows
             {
                 if (!string.IsNullOrEmpty(sbomDir) && fileSystemUtils.DirectoryExists(sbomDir))
                 {
-                    if (configuration.ManifestDirPath.IsDefaultSource)
+                    if (context.ManifestDirPath.IsDefaultSource)
                     {
                         fileSystemUtils.DeleteDir(sbomDir, true);
                     }
@@ -195,7 +199,7 @@ namespace Microsoft.Sbom.Api.Workflows
 
         private void RemoveExistingManifestDirectory()
         {
-            var rootManifestFolderPath = configuration.ManifestDirPath.Value;
+            var rootManifestFolderPath = context.ManifestDirPath.Value;
 
             try
             {

@@ -21,8 +21,8 @@ namespace Microsoft.Sbom.Api.Providers.FilesProviders
     {
         private readonly FileListEnumerator listWalker;
 
-        public FileListBasedFileToJsonProvider(IConfiguration configuration, ChannelUtils channelUtils, ILogger log, FileHasher fileHasher, ManifestFolderFilterer fileFilterer, FileInfoWriter fileHashWriter, InternalSBOMFileInfoDeduplicator internalSBOMFileInfoDeduplicator, FileListEnumerator listWalker)
-            : base(configuration, channelUtils, log, fileHasher, fileFilterer, fileHashWriter, internalSBOMFileInfoDeduplicator)
+        public FileListBasedFileToJsonProvider(IConfiguration configuration, ChannelUtils channelUtils, ILogger log, FileHasher fileHasher, ManifestFolderFilterer fileFilterer, FileInfoWriter fileHashWriter, InternalSBOMFileInfoDeduplicator internalSBOMFileInfoDeduplicator, FileListEnumerator listWalker, IContext context)
+            : base(configuration, channelUtils, log, fileHasher, fileFilterer, fileHashWriter, internalSBOMFileInfoDeduplicator, context)
         {
             this.listWalker = listWalker ?? throw new ArgumentNullException(nameof(listWalker));
         }
@@ -32,7 +32,7 @@ namespace Microsoft.Sbom.Api.Providers.FilesProviders
             if (providerType == ProviderType.Files)
             {
                 // Return true only if the BuildListFile parameter is provided.
-                if (!string.IsNullOrWhiteSpace(Configuration.BuildListFile?.Value))
+                if (!string.IsNullOrWhiteSpace(context.BuildListFile?.Value))
                 {
                     Log.Debug($"Using the {nameof(FileListBasedFileToJsonProvider)} provider for the files workflow.");
                     return true;
@@ -44,7 +44,7 @@ namespace Microsoft.Sbom.Api.Providers.FilesProviders
 
         protected override (ChannelReader<string> entities, ChannelReader<FileValidationResult> errors) GetSourceChannel()
         {
-            return listWalker.GetFilesFromList(Configuration.BuildListFile.Value);
+            return listWalker.GetFilesFromList(context.BuildListFile.Value);
         }
 
         protected override (ChannelReader<JsonDocWithSerializer> results, ChannelReader<FileValidationResult> errors) WriteAdditionalItems(IList<ISbomConfig> requiredConfigs)

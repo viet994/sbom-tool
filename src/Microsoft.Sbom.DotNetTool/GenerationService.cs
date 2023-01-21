@@ -9,6 +9,8 @@ using Microsoft.Sbom.Api;
 using Microsoft.Sbom.Api.Exceptions;
 using Microsoft.Sbom.Api.Output.Telemetry;
 using Microsoft.Sbom.Api.Workflows;
+using Microsoft.Sbom.Common.Config;
+using Microsoft.Sbom.Contracts;
 
 namespace Microsoft.Sbom.Tool
 {
@@ -17,24 +19,31 @@ namespace Microsoft.Sbom.Tool
         private readonly IWorkflow<SBOMGenerationWorkflow> generationWorkflow;
         private readonly IRecorder recorder;
         private readonly IHostApplicationLifetime hostApplicationLifetime;
+        private readonly ISBOMGenerator generator;
+        private readonly IContext context;
 
         public GenerationService(
-            IWorkflow<SBOMGenerationWorkflow> generationWorkflow,
+            //IWorkflow<SBOMGenerationWorkflow> generationWorkflow,
             IRecorder recorder,
-            IHostApplicationLifetime hostApplicationLifetime)
+            IHostApplicationLifetime hostApplicationLifetime,
+            ISBOMGenerator generator,
+            IContext context)
         {
-            this.generationWorkflow = generationWorkflow;
+            //this.generationWorkflow = generationWorkflow;
             this.recorder = recorder;
             this.hostApplicationLifetime = hostApplicationLifetime;
+            this.generator = generator;
+            this.context = context;
         }
 
         public async Task StartAsync(CancellationToken cancellationToken)
         {
             try
             {
-                var result = await generationWorkflow.RunAsync();
+                var result = await generator.GenerateSBOMAsync(context.BuildDropPath.Value);
+                //var result = await generationWorkflow.RunAsync();
                 await recorder.FinalizeAndLogTelemetryAsync();
-                Environment.ExitCode = result ? (int)ExitCode.Success : (int)ExitCode.GeneralError;
+                Environment.ExitCode = result.IsSuccessful ? (int)ExitCode.Success : (int)ExitCode.GeneralError;
             }
             catch (AccessDeniedValidationArgException e)
             {

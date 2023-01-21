@@ -38,8 +38,9 @@ namespace Microsoft.Sbom.Api.Providers.ExternalDocumentReferenceProviders
             ComponentToExternalReferenceInfoConverter componentToExternalReferenceInfoConverter,
             ExternalDocumentReferenceWriter externalDocumentReferenceWriter,
             SBOMComponentsWalker sbomComponentsWalker,
-            ExternalReferenceDeduplicator externalReferenceDeduplicator)
-            : base(configuration, channelUtils, logger)
+            ExternalReferenceDeduplicator externalReferenceDeduplicator,
+            IContext context)
+            : base(configuration, channelUtils, logger, context)
         {
             this.componentToExternalReferenceInfoConverter = componentToExternalReferenceInfoConverter ?? throw new ArgumentNullException(nameof(componentToExternalReferenceInfoConverter));
             this.externalDocumentReferenceWriter = externalDocumentReferenceWriter ?? throw new ArgumentNullException(nameof(externalDocumentReferenceWriter));
@@ -69,12 +70,12 @@ namespace Microsoft.Sbom.Api.Providers.ExternalDocumentReferenceProviders
             var (jsonDoc, jsonErrors) = externalDocumentReferenceWriter.Write(output, requiredConfigs);
             errors.Add(jsonErrors);
 
-            return (jsonDoc, ChannelUtils.Merge(errors.ToArray()));
+            return (jsonDoc, channelUtils.Merge(errors.ToArray()));
         }
 
         protected override (ChannelReader<ScannedComponent> entities, ChannelReader<FileValidationResult> errors) GetSourceChannel()
         {
-            var (output, cdErrors) = sbomComponentsWalker.GetComponents(Configuration.BuildComponentPath?.Value);
+            var (output, cdErrors) = sbomComponentsWalker.GetComponents(context.BuildComponentPath?.Value);
 
             if (cdErrors.TryRead(out ComponentDetectorException e))
             {

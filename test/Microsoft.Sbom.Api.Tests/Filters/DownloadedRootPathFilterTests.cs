@@ -20,9 +20,11 @@ namespace Microsoft.Sbom.Api.Filters.Tests
             var fileSystemMock = new Mock<IFileSystemUtils>();
 
             var configMock = new Mock<IConfiguration>();
-            configMock.SetupGet(c => c.RootPathFilter).Returns((ConfigurationSetting<string>)null);
+            
+            var contextMock = new Mock<IContext>();
+            contextMock.SetupGet(c => c.RootPathFilter).Returns((ConfigurationSetting<string>)null);
 
-            var filter = new DownloadedRootPathFilter(configMock.Object, fileSystemMock.Object, logger.Object);
+            var filter = new DownloadedRootPathFilter(configMock.Object, fileSystemMock.Object, logger.Object, contextMock.Object);
             filter.Init();
 
             Assert.IsTrue(filter.IsValid("hello"));
@@ -39,10 +41,11 @@ namespace Microsoft.Sbom.Api.Filters.Tests
             fileSystemMock.Setup(f => f.JoinPaths(It.IsAny<string>(), It.IsAny<string>())).Returns((string r, string p) => $"{r}/{p}");
 
             var configMock = new Mock<IConfiguration>();
-            configMock.SetupGet(c => c.BuildDropPath).Returns(new ConfigurationSetting<string> { Value = "C:/test" });
-            configMock.SetupGet(c => c.RootPathFilter).Returns(new ConfigurationSetting<string> { Value = "validPath" });
+            var contextMock = new Mock<IContext>();
+            contextMock.SetupGet(c => c.BuildDropPath).Returns(new ConfigurationSetting<string> { Value = "C:/test" });
+            contextMock.SetupGet(c => c.RootPathFilter).Returns(new ConfigurationSetting<string> { Value = "validPath" });
 
-            var filter = new DownloadedRootPathFilter(configMock.Object, fileSystemMock.Object, logger.Object);
+            var filter = new DownloadedRootPathFilter(configMock.Object, fileSystemMock.Object, logger.Object, contextMock.Object);
             filter.Init();
 
             Assert.IsTrue(filter.IsValid("c:/test/validPath/test"));

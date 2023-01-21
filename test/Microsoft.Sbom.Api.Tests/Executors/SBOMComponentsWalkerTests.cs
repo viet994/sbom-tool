@@ -29,6 +29,7 @@ namespace Microsoft.Sbom.Api.Executors.Tests
         private readonly Mock<IConfiguration> mockConfiguration = new Mock<IConfiguration>();
         private readonly Mock<ISbomConfigProvider> mockSbomConfigs = new Mock<ISbomConfigProvider>();
         private readonly Mock<IFileSystemUtils> mockFileSystem = new Mock<IFileSystemUtils>();
+        private readonly Mock<IContext> mockContext = new Mock<IContext>();
 
         public SBOMComponentsWalkerTests()
         {
@@ -64,7 +65,7 @@ namespace Microsoft.Sbom.Api.Executors.Tests
             };
 
             mockDetector.Setup(o => o.ScanAsync(It.IsAny<string[]>())).Returns(Task.FromResult(scanResult));
-            var walker = new SBOMComponentsWalker(mockLogger.Object, mockDetector.Object, mockConfiguration.Object, mockSbomConfigs.Object);
+            var walker = new SBOMComponentsWalker(mockLogger.Object, mockDetector.Object, mockConfiguration.Object, mockSbomConfigs.Object, mockContext.Object);
             var packagesChannelReader = walker.GetComponents("root");
 
             var discoveredComponents = await packagesChannelReader.output.ReadAllAsync().ToListAsync();
@@ -109,7 +110,7 @@ namespace Microsoft.Sbom.Api.Executors.Tests
             };
 
             mockDetector.Setup(o => o.ScanAsync(It.IsAny<string[]>())).Returns(Task.FromResult(scanResult));
-            var walker = new SBOMComponentsWalker(mockLogger.Object, mockDetector.Object, mockConfiguration.Object, mockSbomConfigs.Object);
+            var walker = new SBOMComponentsWalker(mockLogger.Object, mockDetector.Object, mockConfiguration.Object, mockSbomConfigs.Object, mockContext.Object);
             var packagesChannelReader = walker.GetComponents("root");
 
             var discoveredComponents = await packagesChannelReader.output.ReadAllAsync().ToListAsync();

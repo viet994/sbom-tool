@@ -30,6 +30,7 @@ namespace Microsoft.Sbom.Api.Workflows.Helpers
         private readonly SBOMFileToFileInfoConverter fileConverter;
         private readonly FileHashesDictionary fileHashesDictionary;
         private readonly FileFilterer spdxFileFilterer;
+        private readonly IContext context;
 
         public FilesValidator(
             DirectoryWalker directoryWalker,
@@ -41,7 +42,8 @@ namespace Microsoft.Sbom.Api.Workflows.Helpers
             EnumeratorChannel enumeratorChannel,
             SBOMFileToFileInfoConverter fileConverter,
             FileHashesDictionary fileHashesDictionary,
-            FileFilterer spdxFileFilterer)
+            FileFilterer spdxFileFilterer,
+            IContext context)
         {
             this.directoryWalker = directoryWalker ?? throw new ArgumentNullException(nameof(directoryWalker));
             this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
@@ -53,6 +55,7 @@ namespace Microsoft.Sbom.Api.Workflows.Helpers
             this.fileConverter = fileConverter ?? throw new ArgumentNullException(nameof(fileConverter));
             this.fileHashesDictionary = fileHashesDictionary ?? throw new ArgumentNullException(nameof(fileHashesDictionary));
             this.spdxFileFilterer = spdxFileFilterer ?? throw new ArgumentNullException(nameof(spdxFileFilterer));
+            this.context = context;
         }
 
         public async Task<(int, List<FileValidationResult>)> Validate(ISbomParser sbomParser)
@@ -113,7 +116,7 @@ namespace Microsoft.Sbom.Api.Workflows.Helpers
             var filesWithHashes = new List<ChannelReader<FileValidationResult>>();
 
             // Read all files
-            var (files, dirErrors) = directoryWalker.GetFilesRecursively(configuration.BuildDropPath.Value);
+            var (files, dirErrors) = directoryWalker.GetFilesRecursively(context.BuildDropPath.Value);
             errors.Add(dirErrors);
 
             log.Debug($"Splitting the workflow into {configuration.Parallelism.Value} threads.");

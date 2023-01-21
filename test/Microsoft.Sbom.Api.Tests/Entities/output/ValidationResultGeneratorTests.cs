@@ -22,9 +22,10 @@ namespace Microsoft.Sbom.Api.Entities.Output.Tests
         public void ValidationResultGenerator_ShouldGenerateReportWithoutFailures()
         {
             var manifestData = GetDefaultManifestData();
-            Mock<IConfiguration> configurationMock = GetDefaultConfigurationMock(ignoreMissing: false);
+            Mock<IConfiguration> configurationMock = GetDefaultConfigurationMock();
+            Mock<IContext> contextMock = GetDefaultContextMock(ignoreMissing: false);
 
-            var validationResultGenerator = new ValidationResultGenerator(configurationMock.Object);
+            var validationResultGenerator = new ValidationResultGenerator(configurationMock.Object, contextMock.Object);
             var failures = new List<FileValidationResult>();
 
             failures.Add(new FileValidationResult()
@@ -58,9 +59,10 @@ namespace Microsoft.Sbom.Api.Entities.Output.Tests
         public void ValidationResultGenerator_ShouldGenerateReportWithoutFailuresIfIgnoreMissing()
         {
             var manifestData = GetDefaultManifestData();
-            Mock<IConfiguration> configurationMock = GetDefaultConfigurationMock(ignoreMissing: true);
+            Mock<IConfiguration> configurationMock = GetDefaultConfigurationMock();
+            Mock<IContext> contextMock = GetDefaultContextMock(ignoreMissing: true);
 
-            var validationResultGenerator = new ValidationResultGenerator(configurationMock.Object);
+            var validationResultGenerator = new ValidationResultGenerator(configurationMock.Object, contextMock.Object);
             var failures = new List<FileValidationResult>();
 
             failures.Add(new FileValidationResult()
@@ -94,9 +96,10 @@ namespace Microsoft.Sbom.Api.Entities.Output.Tests
         public void ValidationResultGenerator_IncorrectHashShouldCauseFailure()
         {
             var manifestData = GetDefaultManifestData();
-            Mock<IConfiguration> configurationMock = GetDefaultConfigurationMock(ignoreMissing: false);
+            Mock<IConfiguration> configurationMock = GetDefaultConfigurationMock();
+            Mock<IContext> contextMock = GetDefaultContextMock(ignoreMissing: false);
 
-            var validationResultGenerator = new ValidationResultGenerator(configurationMock.Object);
+            var validationResultGenerator = new ValidationResultGenerator(configurationMock.Object, contextMock.Object);
             var failures = new List<FileValidationResult>();
 
             failures.Add(new FileValidationResult()
@@ -136,9 +139,10 @@ namespace Microsoft.Sbom.Api.Entities.Output.Tests
         public void ValidationResultGenerator_MissingFileShouldCauseFailure()
         {
             var manifestData = GetDefaultManifestData();
-            Mock<IConfiguration> configurationMock = GetDefaultConfigurationMock(ignoreMissing: false);
+            Mock<IConfiguration> configurationMock = GetDefaultConfigurationMock();
+            Mock<IContext> contextMock = GetDefaultContextMock(ignoreMissing: false);
 
-            var validationResultGenerator = new ValidationResultGenerator(configurationMock.Object);
+            var validationResultGenerator = new ValidationResultGenerator(configurationMock.Object, contextMock.Object);
             var failures = new List<FileValidationResult>();
 
             failures.Add(new FileValidationResult()
@@ -178,9 +182,10 @@ namespace Microsoft.Sbom.Api.Entities.Output.Tests
         public void ValidationResultGenerator_MissingFileShouldNotCauseFailureIfIgnoreMissing()
         {
             var manifestData = GetDefaultManifestData();
-            Mock<IConfiguration> configurationMock = GetDefaultConfigurationMock(ignoreMissing: true);
+            Mock<IConfiguration> configurationMock = GetDefaultConfigurationMock();
+            Mock<IContext> contextMock = GetDefaultContextMock(ignoreMissing: true);
 
-            var validationResultGenerator = new ValidationResultGenerator(configurationMock.Object);
+            var validationResultGenerator = new ValidationResultGenerator(configurationMock.Object, contextMock.Object);
             var failures = new List<FileValidationResult>();
 
             failures.Add(new FileValidationResult()
@@ -220,9 +225,10 @@ namespace Microsoft.Sbom.Api.Entities.Output.Tests
         public void ValidationResultGenerator_ShouldFailOnlyOnWrongHashIfIgnoreMissing()
         {
             var manifestData = GetDefaultManifestData();
-            Mock<IConfiguration> configurationMock = GetDefaultConfigurationMock(ignoreMissing: true);
+            Mock<IConfiguration> configurationMock = GetDefaultConfigurationMock();
+            Mock<IContext> contextMock = GetDefaultContextMock(ignoreMissing: true);
 
-            var validationResultGenerator = new ValidationResultGenerator(configurationMock.Object);
+            var validationResultGenerator = new ValidationResultGenerator(configurationMock.Object, contextMock.Object);
             var failures = new List<FileValidationResult>();
 
             failures.Add(new FileValidationResult()
@@ -264,18 +270,24 @@ namespace Microsoft.Sbom.Api.Entities.Output.Tests
             Assert.AreEqual(3, validationResultOutput.Summary.ValidationTelemetery.FilesSkippedCount);
         }
 
-        private static Mock<IConfiguration> GetDefaultConfigurationMock(bool ignoreMissing)
+        private static Mock<IConfiguration> GetDefaultConfigurationMock()
         {
             var configurationMock = new Mock<IConfiguration>();
-            configurationMock.SetupGet(c => c.BuildDropPath).Returns(new ConfigurationSetting<string> { Value = "/root" });
-            configurationMock.SetupGet(c => c.ManifestDirPath).Returns(new ConfigurationSetting<string> { Value = PathUtils.Join("/root", "_manifest") });
             configurationMock.SetupGet(c => c.Parallelism).Returns(new ConfigurationSetting<int> { Value = 3 });
             configurationMock.SetupGet(c => c.HashAlgorithm).Returns(new ConfigurationSetting<AlgorithmName> { Value = Constants.DefaultHashAlgorithmName });
-            configurationMock.SetupGet(c => c.RootPathFilter).Returns(new ConfigurationSetting<string> { Value = "child1;child2;child3" });
-            configurationMock.SetupGet(c => c.ValidateSignature).Returns(new ConfigurationSetting<bool> { Value = true });
-            configurationMock.SetupGet(c => c.IgnoreMissing).Returns(new ConfigurationSetting<bool> { Value = ignoreMissing });
             configurationMock.SetupGet(c => c.ManifestToolAction).Returns(ManifestToolActions.Validate);
             return configurationMock;
+        }
+
+        private static Mock<IContext> GetDefaultContextMock(bool ignoreMissing)
+        {
+            var contextMock = new Mock<IContext>();
+            contextMock.SetupGet(c => c.BuildDropPath).Returns(new ConfigurationSetting<string> { Value = "/root" });
+            contextMock.SetupGet(c => c.RootPathFilter).Returns(new ConfigurationSetting<string> { Value = "child1;child2;child3" });
+            contextMock.SetupGet(c => c.ValidateSignature).Returns(new ConfigurationSetting<bool> { Value = true });
+            contextMock.SetupGet(c => c.ManifestDirPath).Returns(new ConfigurationSetting<string> { Value = PathUtils.Join("/root", "_manifest") });
+            contextMock.SetupGet(c => c.IgnoreMissing).Returns(new ConfigurationSetting<bool> { Value = ignoreMissing });
+            return contextMock;
         }
 
         private static ManifestData GetDefaultManifestData()

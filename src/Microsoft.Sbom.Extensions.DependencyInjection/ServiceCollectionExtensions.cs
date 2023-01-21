@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using AutoMapper;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Sbom.Api;
 using Microsoft.Sbom.Api.Config;
@@ -47,6 +48,7 @@ namespace Microsoft.Sbom.Extensions.DependencyInjection
         public static IServiceCollection AddSbomTool(this IServiceCollection services)
         {
             services
+            .AddSingleton<IContext, ContextAdapter>()
             .AddTransient(_ => FileSystemUtilsProvider.CreateInstance())
             .AddTransient<ILogger>(x =>
             {
@@ -111,7 +113,7 @@ namespace Microsoft.Sbom.Extensions.DependencyInjection
             .AddSingleton<InternalSBOMFileInfoDeduplicator>()
             .AddSingleton<ExternalReferenceInfoToPathConverter>()
             .AddSingleton<ExternalReferenceDeduplicator>()
-            .AddAutoMapper(x => x.AddProfile(new ConfigurationProfile()), typeof(ConfigValidator), typeof(ConfigSanitizer))
+            .AddAutoMapper(x => x.AddProfiles(new Profile[] { new ConfigurationProfile(), new ContextProfile() }), typeof(ConfigValidator), typeof(ConfigSanitizer), typeof(ContextSanitizer))
             .Scan(scan => scan.FromApplicationDependencies()
                 .AddClasses(classes => classes.AssignableTo<ConfigValidator>())
                     .As<ConfigValidator>()
@@ -138,7 +140,8 @@ namespace Microsoft.Sbom.Extensions.DependencyInjection
                 manifestData.HashesMap = new ConcurrentDictionary<string, Checksum[]>(manifestData.HashesMap, osUtils.GetFileSystemStringComparer());
 
                 return manifestData;
-            });
+            })
+            .AddTransient<ISBOMGenerator, SBOMGenerator>();
             return services;
         }
     }

@@ -19,6 +19,7 @@ namespace Microsoft.Sbom.Api.Convertors.Tests
         private Mock<IFileSystemUtils> fileSystemUtils;
         private Mock<IFileSystemUtilsExtension> fileSystemExtensionUtils;
         private Mock<IConfiguration> configurationMock;
+        private Mock<IContext> contextMock;
         private SbomToolManifestPathConverter converter;
 
         [TestInitialize]
@@ -28,8 +29,9 @@ namespace Microsoft.Sbom.Api.Convertors.Tests
             fileSystemUtils = new Mock<IFileSystemUtils>();
             fileSystemExtensionUtils = new Mock<IFileSystemUtilsExtension>();
             configurationMock = new Mock<IConfiguration>();
+            contextMock = new Mock<IContext>();
 
-            converter = new SbomToolManifestPathConverter(configurationMock.Object, osUtils.Object, fileSystemUtils.Object, fileSystemExtensionUtils.Object);
+            converter = new SbomToolManifestPathConverter(configurationMock.Object, osUtils.Object, fileSystemUtils.Object, fileSystemExtensionUtils.Object, contextMock.Object);
 
             fileSystemUtils.Setup(f => f.GetRelativePath(It.IsAny<string>(), It.IsAny<string>()))
                 .Returns((string r, string p) => PathUtils.GetRelativePath(r, p));
@@ -51,7 +53,7 @@ namespace Microsoft.Sbom.Api.Convertors.Tests
 
             foreach (var os in operatingSystems)
             {
-                configurationMock.SetupGet(c => c.BuildDropPath).Returns(new ConfigurationSetting<string> { Value = rootPath });
+                contextMock.SetupGet(c => c.BuildDropPath).Returns(new ConfigurationSetting<string> { Value = rootPath });
                 osUtils.Setup(o => o.GetCurrentOSPlatform()).Returns(os);
                 var (path, isOutsideDropPath) = converter.Convert(rootPath + @"\hello\World");
                 Assert.AreEqual("/hello/World", path);
@@ -71,7 +73,7 @@ namespace Microsoft.Sbom.Api.Convertors.Tests
 
             foreach (var os in operatingSystems)
             {
-                configurationMock.SetupGet(c => c.BuildDropPath).Returns(new ConfigurationSetting<string> { Value = rootPath });
+                contextMock.SetupGet(c => c.BuildDropPath).Returns(new ConfigurationSetting<string> { Value = rootPath });
                 osUtils.Setup(o => o.GetCurrentOSPlatform()).Returns(os);
                 var (path, isOutsideDropPath) = converter.Convert(rootPath + @"\hello\.\World");
                 Assert.AreEqual("/hello/World", path);
@@ -91,7 +93,7 @@ namespace Microsoft.Sbom.Api.Convertors.Tests
 
             foreach (var os in operatingSystems)
             {
-                configurationMock.SetupGet(c => c.BuildDropPath).Returns(new ConfigurationSetting<string> { Value = rootPath });
+                contextMock.SetupGet(c => c.BuildDropPath).Returns(new ConfigurationSetting<string> { Value = rootPath });
                 osUtils.Setup(o => o.GetCurrentOSPlatform()).Returns(os);
                 var (path, isOutsideDropPath) = converter.Convert(rootPath + @"\hello\.\World");
                 Assert.AreEqual("/hello/World", path);
@@ -111,7 +113,7 @@ namespace Microsoft.Sbom.Api.Convertors.Tests
 
             foreach (var os in operatingSystems)
             {
-                configurationMock.SetupGet(c => c.BuildDropPath).Returns(new ConfigurationSetting<string> { Value = rootPath });
+                contextMock.SetupGet(c => c.BuildDropPath).Returns(new ConfigurationSetting<string> { Value = rootPath });
                 osUtils.Setup(o => o.GetCurrentOSPlatform()).Returns(os);
                 var (path, isOutsideDropPath) = converter.Convert(@"C:\sample\Root" + @"\hello\World");
                 Assert.AreEqual("/hello/World", path);
@@ -123,7 +125,7 @@ namespace Microsoft.Sbom.Api.Convertors.Tests
         public void SbomToolManifestPathConverterTests_CaseSensitive_OSX_Fails()
         {
             var rootPath = @"C:\Sample\Root";
-            configurationMock.SetupGet(c => c.BuildDropPath).Returns(new ConfigurationSetting<string> { Value = rootPath });
+            contextMock.SetupGet(c => c.BuildDropPath).Returns(new ConfigurationSetting<string> { Value = rootPath });
             osUtils.Setup(o => o.GetCurrentOSPlatform()).Returns(OSPlatform.OSX);
             fileSystemExtensionUtils.Setup(f => f.IsTargetPathInSource(It.IsAny<string>(), It.IsAny<string>())).Returns(false);
             var (path, isOutsideDropPath) = converter.Convert(@"C:\sample\Root" + @"\hello\World");
@@ -135,7 +137,7 @@ namespace Microsoft.Sbom.Api.Convertors.Tests
         public void SbomToolManifestPathConverterTests_CaseSensitive_Linux_Fails()
         {
             var rootPath = @"C:\Sample\Root";
-            configurationMock.SetupGet(c => c.BuildDropPath).Returns(new ConfigurationSetting<string> { Value = rootPath });
+            contextMock.SetupGet(c => c.BuildDropPath).Returns(new ConfigurationSetting<string> { Value = rootPath });
             osUtils.Setup(o => o.GetCurrentOSPlatform()).Returns(OSPlatform.Linux);
             fileSystemExtensionUtils.Setup(f => f.IsTargetPathInSource(It.IsAny<string>(), It.IsAny<string>())).Returns(false);
             var (path, isOutsideDropPath) = converter.Convert(@"C:\sample\Root" + @"\hello\World");
@@ -148,7 +150,7 @@ namespace Microsoft.Sbom.Api.Convertors.Tests
         {
             var rootPath = @"C:\Sample\Root";
 
-            configurationMock.SetupGet(c => c.BuildDropPath).Returns(new ConfigurationSetting<string> { Value = rootPath });
+            contextMock.SetupGet(c => c.BuildDropPath).Returns(new ConfigurationSetting<string> { Value = rootPath });
             osUtils.Setup(o => o.GetCurrentOSPlatform()).Returns(OSPlatform.Windows);
             fileSystemExtensionUtils.Setup(f => f.IsTargetPathInSource(It.IsAny<string>(), It.IsAny<string>())).Returns(false);
 
@@ -162,7 +164,7 @@ namespace Microsoft.Sbom.Api.Convertors.Tests
             var filePath = @"d:\Root\hello\World.spdx.json";
             var expectedPath = @"/d:/Root/hello/World.spdx.json";
 
-            configurationMock.SetupGet(c => c.BuildDropPath).Returns(new ConfigurationSetting<string> { Value = rootPath });
+            contextMock.SetupGet(c => c.BuildDropPath).Returns(new ConfigurationSetting<string> { Value = rootPath });
             osUtils.Setup(o => o.GetCurrentOSPlatform()).Returns(OSPlatform.Windows);
             var (path, isOutsideDropPath) = converter.Convert(filePath);
             Assert.AreEqual(expectedPath, path);
@@ -175,7 +177,7 @@ namespace Microsoft.Sbom.Api.Convertors.Tests
             var filePath = @"C:\Sample\hello\World.spdx.json";
             var expectedPath = @"/../hello/World.spdx.json";
 
-            configurationMock.SetupGet(c => c.BuildDropPath).Returns(new ConfigurationSetting<string> { Value = rootPath });
+            contextMock.SetupGet(c => c.BuildDropPath).Returns(new ConfigurationSetting<string> { Value = rootPath });
             osUtils.Setup(o => o.GetCurrentOSPlatform()).Returns(OSPlatform.Windows);
             var (path, isOutsideDropPath) = converter.Convert(filePath);
             Assert.AreEqual(expectedPath, path);

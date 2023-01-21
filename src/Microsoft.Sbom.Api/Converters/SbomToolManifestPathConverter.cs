@@ -26,13 +26,15 @@ namespace Microsoft.Sbom.Api.Convertors
         private readonly IOSUtils osUtils;
         private readonly IFileSystemUtils fileSystemUtils;
         private readonly IFileSystemUtilsExtension fileSystemUtilsExtension;
+        private readonly IContext context;
 
-        public SbomToolManifestPathConverter(IConfiguration configuration, IOSUtils osUtils, IFileSystemUtils fileSystemUtils, IFileSystemUtilsExtension fileSystemUtilsExtension)
+        public SbomToolManifestPathConverter(IConfiguration configuration, IOSUtils osUtils, IFileSystemUtils fileSystemUtils, IFileSystemUtilsExtension fileSystemUtilsExtension, IContext context)
         {
             this.configuration = configuration;
             this.osUtils = osUtils;
             this.fileSystemUtils = fileSystemUtils;
             this.fileSystemUtilsExtension = fileSystemUtilsExtension;
+            this.context = context;
         }
 
         public (string, bool) Convert(string path, bool prependDotToPath = false)
@@ -40,7 +42,7 @@ namespace Microsoft.Sbom.Api.Convertors
             string dotString = prependDotToPath ? "." : string.Empty;
             
             // relativeTo 
-            string buildDropPath = configuration.BuildDropPath.Value;
+            string buildDropPath = context.BuildDropPath.Value;
             bool isOutsideDropPath = false;
             if (path == null)
             {

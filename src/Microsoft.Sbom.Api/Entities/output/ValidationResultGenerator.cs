@@ -18,12 +18,14 @@ namespace Microsoft.Sbom.Api.Entities.Output
         private int totalFiles;
         private TimeSpan duration;
         private readonly IConfiguration configuration;
+        private readonly IContext context;
 
         public IList<FileValidationResult> NodeValidationResults { get; set; }
 
-        public ValidationResultGenerator(IConfiguration configuration)
+        public ValidationResultGenerator(IConfiguration configuration, IContext context)
         {
             this.configuration = configuration;
+            this.context = context;
         }
 
         /// <summary>
@@ -74,7 +76,7 @@ namespace Microsoft.Sbom.Api.Entities.Output
             validationErrors = NodeValidationResults.Where(r => !Constants.SkipFailureReportingForErrors.Contains(r.ErrorType)).ToList();
             skippedErrors = NodeValidationResults.Where(r => Constants.SkipFailureReportingForErrors.Contains(r.ErrorType)).ToList();
             
-            if (configuration.IgnoreMissing.Value)
+            if (context.IgnoreMissing.Value)
             {
                 validationErrors.RemoveAll(e => e.ErrorType == ErrorType.MissingFile);
                 skippedErrors.AddRange(NodeValidationResults.Where(r => r.ErrorType == ErrorType.MissingFile));

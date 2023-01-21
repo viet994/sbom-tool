@@ -87,15 +87,16 @@ namespace Microsoft.Sbom.Workflows
                 .Returns(sbomParser.Object);
             manifestParserProvider.Setup(m => m.Get(It.IsAny<ManifestInfo>())).Returns(manifestInterface.Object);
 
-            configurationMock.SetupGet(c => c.BuildDropPath).Returns(new ConfigurationSetting<string> { Value = "/root" });
-            configurationMock.SetupGet(c => c.ManifestDirPath).Returns(new ConfigurationSetting<string> { Value = PathUtils.Join("/root", "_manifest") });
+            var contextMock = new Mock<IContext>();
+            contextMock.SetupGet(c => c.BuildDropPath).Returns(new ConfigurationSetting<string> { Value = "/root" });
+            contextMock.SetupGet(c => c.ManifestDirPath).Returns(new ConfigurationSetting<string> { Value = PathUtils.Join("/root", "_manifest") });
+            contextMock.SetupGet(c => c.RootPathFilter).Returns(new ConfigurationSetting<string> { Value = "child1;child2;child3" });
+            contextMock.SetupGet(c => c.ValidateSignature).Returns(new ConfigurationSetting<bool> { Value = true });
+            contextMock.SetupGet(c => c.IgnoreMissing).Returns(new ConfigurationSetting<bool> { Value = true });
             configurationMock.SetupGet(c => c.Parallelism).Returns(new ConfigurationSetting<int> { Value = 3 });
             configurationMock.SetupGet(c => c.HashAlgorithm).Returns(new ConfigurationSetting<AlgorithmName> { Value = Constants.DefaultHashAlgorithmName });
-            configurationMock.SetupGet(c => c.RootPathFilter).Returns(new ConfigurationSetting<string> { Value = "child1;child2;child3" });
-            configurationMock.SetupGet(c => c.IgnoreMissing).Returns(new ConfigurationSetting<bool> { Value = true });
             configurationMock.SetupGet(c => c.ManifestToolAction).Returns(ManifestToolActions.Validate);
             configurationMock.SetupGet(c => c.FollowSymlinks).Returns(new ConfigurationSetting<bool> { Value = true });
-            configurationMock.SetupGet(c => c.ValidateSignature).Returns(new ConfigurationSetting<bool> { Value = true });
             configurationMock.SetupGet(c => c.ManifestInfo).Returns(new ConfigurationSetting<IList<ManifestInfo>>
             {
                 Value = new List<ManifestInfo>() { Constants.SPDX22ManifestInfo }
@@ -117,7 +118,7 @@ namespace Microsoft.Sbom.Workflows
 
             fileSystemUtilsExtensionMock.Setup(f => f.IsTargetPathInSource(It.IsAny<string>(), It.IsAny<string>())).Returns(true);
 
-            var validationResultGenerator = new ValidationResultGenerator(configurationMock.Object);
+            var validationResultGenerator = new ValidationResultGenerator(configurationMock.Object, contextMock.Object);
 
             var directoryWalker = new DirectoryWalker(fileSystemMock.Object, mockLogger.Object, configurationMock.Object);
 
@@ -136,24 +137,24 @@ namespace Microsoft.Sbom.Workflows
 
             var fileHasher = new FileHasher(
                               hashCodeGeneratorMock.Object,
-                              new SbomToolManifestPathConverter(configurationMock.Object, mockOSUtils.Object, fileSystemMock.Object, fileSystemUtilsExtensionMock.Object),
+                              new SbomToolManifestPathConverter(configurationMock.Object, mockOSUtils.Object, fileSystemMock.Object, fileSystemUtilsExtensionMock.Object, contextMock.Object),
                               mockLogger.Object,
                               configurationMock.Object,
                               new Mock<ISbomConfigProvider>().Object,
                               new ManifestGeneratorProvider(null),
                               new FileTypeUtils());
 
-            var manifestFilterMock = new ManifestFolderFilter(configurationMock.Object, fileSystemMock.Object, mockOSUtils.Object);
+            var manifestFilterMock = new ManifestFolderFilter(configurationMock.Object, fileSystemMock.Object, mockOSUtils.Object, contextMock.Object);
             manifestFilterMock.Init();
             var fileFilterer = new ManifestFolderFilterer(manifestFilterMock, mockLogger.Object);
 
-            var rootFileFilterMock = new DownloadedRootPathFilter(configurationMock.Object, fileSystemMock.Object, mockLogger.Object);
+            var rootFileFilterMock = new DownloadedRootPathFilter(configurationMock.Object, fileSystemMock.Object, mockLogger.Object, contextMock.Object);
             rootFileFilterMock.Init();
 
             var hashValidator = new ConcurrentSha256HashValidator(FileHashesDictionarySingleton.Instance);
             var enumeratorChannel = new EnumeratorChannel(mockLogger.Object);
             var fileConverter = new SBOMFileToFileInfoConverter(new FileTypeUtils());
-            var spdxFileFilterer = new FileFilterer(rootFileFilterMock, mockLogger.Object, configurationMock.Object, fileSystemMock.Object);
+            var spdxFileFilterer = new FileFilterer(rootFileFilterMock, mockLogger.Object, configurationMock.Object, fileSystemMock.Object, contextMock.Object);
 
             var filesValidator = new FilesValidator(
                 directoryWalker,
@@ -165,7 +166,8 @@ namespace Microsoft.Sbom.Workflows
                 enumeratorChannel,
                 fileConverter,
                 FileHashesDictionarySingleton.Instance,
-                spdxFileFilterer);
+                spdxFileFilterer,
+                contextMock.Object);
 
             var validator = new SBOMParserBasedValidationWorkflow(
                 recorder.Object,
@@ -177,7 +179,8 @@ namespace Microsoft.Sbom.Workflows
                 filesValidator,
                 validationResultGenerator,
                 outputWriterMock.Object,
-                fileSystemMock.Object);
+                fileSystemMock.Object,
+                contextMock.Object);
 
             var result = await validator.RunAsync();
             Assert.IsTrue(result);
@@ -229,15 +232,16 @@ namespace Microsoft.Sbom.Workflows
                 .Returns(sbomParser.Object);
             manifestParserProvider.Setup(m => m.Get(It.IsAny<ManifestInfo>())).Returns(manifestInterface.Object);
 
-            configurationMock.SetupGet(c => c.BuildDropPath).Returns(new ConfigurationSetting<string> { Value = "/root" });
-            configurationMock.SetupGet(c => c.ManifestDirPath).Returns(new ConfigurationSetting<string> { Value = PathUtils.Join("/root", "_manifest") });
+            var contextMock = new Mock<IContext>();
+            contextMock.SetupGet(c => c.BuildDropPath).Returns(new ConfigurationSetting<string> { Value = "/root" });
+            contextMock.SetupGet(c => c.ManifestDirPath).Returns(new ConfigurationSetting<string> { Value = PathUtils.Join("/root", "_manifest") });
+            contextMock.SetupGet(c => c.RootPathFilter).Returns(new ConfigurationSetting<string> { Value = "child1;child2;child3" });
+            contextMock.SetupGet(c => c.ValidateSignature).Returns(new ConfigurationSetting<bool> { Value = true });
+            contextMock.SetupGet(c => c.IgnoreMissing).Returns(new ConfigurationSetting<bool> { Value = false });
             configurationMock.SetupGet(c => c.Parallelism).Returns(new ConfigurationSetting<int> { Value = 3 });
             configurationMock.SetupGet(c => c.HashAlgorithm).Returns(new ConfigurationSetting<AlgorithmName> { Value = Constants.DefaultHashAlgorithmName });
-            configurationMock.SetupGet(c => c.RootPathFilter).Returns(new ConfigurationSetting<string> { Value = "child1;child2;child3" });
-            configurationMock.SetupGet(c => c.IgnoreMissing).Returns(new ConfigurationSetting<bool> { Value = false });
             configurationMock.SetupGet(c => c.ManifestToolAction).Returns(ManifestToolActions.Validate);
             configurationMock.SetupGet(c => c.FollowSymlinks).Returns(new ConfigurationSetting<bool> { Value = true });
-            configurationMock.SetupGet(c => c.ValidateSignature).Returns(new ConfigurationSetting<bool> { Value = true });
             configurationMock.SetupGet(c => c.ManifestInfo).Returns(new ConfigurationSetting<IList<ManifestInfo>>
             {
                 Value = new List<ManifestInfo>() { Constants.SPDX22ManifestInfo }
@@ -259,7 +263,7 @@ namespace Microsoft.Sbom.Workflows
 
             fileSystemUtilsExtensionMock.Setup(f => f.IsTargetPathInSource(It.IsAny<string>(), It.IsAny<string>())).Returns(true);
 
-            var validationResultGenerator = new ValidationResultGenerator(configurationMock.Object);
+            var validationResultGenerator = new ValidationResultGenerator(configurationMock.Object, contextMock.Object);
 
             var directoryWalker = new DirectoryWalker(fileSystemMock.Object, mockLogger.Object, configurationMock.Object);
 
@@ -283,24 +287,24 @@ namespace Microsoft.Sbom.Workflows
 
             var fileHasher = new FileHasher(
                               hashCodeGeneratorMock.Object,
-                              new SbomToolManifestPathConverter(configurationMock.Object, mockOSUtils.Object, fileSystemMock.Object, fileSystemUtilsExtensionMock.Object),
+                              new SbomToolManifestPathConverter(configurationMock.Object, mockOSUtils.Object, fileSystemMock.Object, fileSystemUtilsExtensionMock.Object, contextMock.Object),
                               mockLogger.Object,
                               configurationMock.Object,
                               new Mock<ISbomConfigProvider>().Object,
                               new ManifestGeneratorProvider(null),
                               new FileTypeUtils());
 
-            var manifestFilterMock = new ManifestFolderFilter(configurationMock.Object, fileSystemMock.Object, mockOSUtils.Object);
+            var manifestFilterMock = new ManifestFolderFilter(configurationMock.Object, fileSystemMock.Object, mockOSUtils.Object, contextMock.Object);
             manifestFilterMock.Init();
             var fileFilterer = new ManifestFolderFilterer(manifestFilterMock, mockLogger.Object);
 
-            var rootFileFilterMock = new DownloadedRootPathFilter(configurationMock.Object, fileSystemMock.Object, mockLogger.Object);
+            var rootFileFilterMock = new DownloadedRootPathFilter(configurationMock.Object, fileSystemMock.Object, mockLogger.Object, contextMock.Object);
             rootFileFilterMock.Init();
 
             var hashValidator = new ConcurrentSha256HashValidator(FileHashesDictionarySingleton.Instance);
             var enumeratorChannel = new EnumeratorChannel(mockLogger.Object);
             var fileConverter = new SBOMFileToFileInfoConverter(new FileTypeUtils());
-            var spdxFileFilterer = new FileFilterer(rootFileFilterMock, mockLogger.Object, configurationMock.Object, fileSystemMock.Object);
+            var spdxFileFilterer = new FileFilterer(rootFileFilterMock, mockLogger.Object, configurationMock.Object, fileSystemMock.Object, contextMock.Object);
 
             var filesValidator = new FilesValidator(
                 directoryWalker,
@@ -312,7 +316,8 @@ namespace Microsoft.Sbom.Workflows
                 enumeratorChannel,
                 fileConverter,
                 FileHashesDictionarySingleton.Instance,
-                spdxFileFilterer);
+                spdxFileFilterer,
+                contextMock.Object);
             
             var validator = new SBOMParserBasedValidationWorkflow(
                 recorder.Object,
@@ -324,7 +329,8 @@ namespace Microsoft.Sbom.Workflows
                 filesValidator, 
                 validationResultGenerator,
                 outputWriterMock.Object, 
-                fileSystemMock.Object);
+                fileSystemMock.Object,
+                contextMock.Object);
 
             var result = await validator.RunAsync();
             Assert.IsFalse(result);

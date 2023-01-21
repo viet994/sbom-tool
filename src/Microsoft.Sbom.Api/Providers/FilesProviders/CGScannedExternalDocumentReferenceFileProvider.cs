@@ -40,8 +40,9 @@ namespace Microsoft.Sbom.Api.Providers.FilesProviders
             ComponentToExternalReferenceInfoConverter componentToExternalReferenceInfoConverter,
             ExternalReferenceInfoToPathConverter externalReferenceInfoToPathConverter,
             ExternalDocumentReferenceWriter externalDocumentReferenceWriter,
-            SBOMComponentsWalker sbomComponentsWalker)
-            : base(configuration, channelUtils, log, fileHasher, fileFilterer, fileHashWriter, internalSBOMFileInfoDeduplicator)
+            SBOMComponentsWalker sbomComponentsWalker,
+            IContext context)
+            : base(configuration, channelUtils, log, fileHasher, fileFilterer, fileHashWriter, internalSBOMFileInfoDeduplicator, context)
         {
             ComponentToExternalReferenceInfoConverter = componentToExternalReferenceInfoConverter ?? throw new ArgumentNullException(nameof(componentToExternalReferenceInfoConverter));
             ExternalReferenceInfoToPathConverter = externalReferenceInfoToPathConverter ?? throw new ArgumentNullException(nameof(externalReferenceInfoToPathConverter));
@@ -62,7 +63,7 @@ namespace Microsoft.Sbom.Api.Providers.FilesProviders
 
         protected override (ChannelReader<string> entities, ChannelReader<FileValidationResult> errors) GetSourceChannel()
         {
-            var (sbomOutput, cdErrors) = SBOMComponentsWalker.GetComponents(Configuration.BuildComponentPath?.Value);
+            var (sbomOutput, cdErrors) = SBOMComponentsWalker.GetComponents(context.BuildComponentPath?.Value);
             IList<ChannelReader<FileValidationResult>> errors = new List<ChannelReader<FileValidationResult>>();
 
             if (cdErrors.TryRead(out ComponentDetectorException e))
@@ -76,7 +77,7 @@ namespace Microsoft.Sbom.Api.Providers.FilesProviders
             var (pathOutput, pathErrors) = ExternalReferenceInfoToPathConverter.Convert(externalRefDocOutput);
             errors.Add(pathErrors);
 
-            return (pathOutput, ChannelUtils.Merge(errors.ToArray()));
+            return (pathOutput, channelUtils.Merge(errors.ToArray()));
         }
 
         protected override (ChannelReader<JsonDocWithSerializer> results, ChannelReader<FileValidationResult> errors) WriteAdditionalItems(IList<ISbomConfig> requiredConfigs)

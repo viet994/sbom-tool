@@ -28,8 +28,9 @@ namespace Microsoft.Sbom.Api.Providers.FilesProviders
             ManifestFolderFilterer fileFilterer,
             FileInfoWriter fileHashWriter,
             InternalSBOMFileInfoDeduplicator internalSBOMFileInfoDeduplicator,
-            DirectoryWalker directoryWalker)
-            : base(configuration, channelUtils, log, fileHasher, fileFilterer, fileHashWriter, internalSBOMFileInfoDeduplicator)
+            DirectoryWalker directoryWalker,
+            IContext context)
+            : base(configuration, channelUtils, log, fileHasher, fileFilterer, fileHashWriter, internalSBOMFileInfoDeduplicator, context)
         {
             this.directoryWalker = directoryWalker ?? throw new ArgumentNullException(nameof(directoryWalker));
         }
@@ -40,7 +41,7 @@ namespace Microsoft.Sbom.Api.Providers.FilesProviders
             {
                 // This is the last sources provider we should use, if no other sources have been provided by the user.
                 // Thus, this condition should be to check that all the remaining configurations for file inputs are null.
-                if (string.IsNullOrWhiteSpace(Configuration.BuildListFile?.Value) && Configuration.FilesList?.Value == null)
+                if (string.IsNullOrWhiteSpace(context.BuildListFile?.Value) && context.FilesList?.Value == null)
                 {
                     Log.Debug($"Using the {nameof(DirectoryTraversingFileToJsonProvider)} provider for the files workflow.");
                     return true;
@@ -52,7 +53,7 @@ namespace Microsoft.Sbom.Api.Providers.FilesProviders
 
         protected override (ChannelReader<string> entities, ChannelReader<FileValidationResult> errors) GetSourceChannel()
         {
-            return directoryWalker.GetFilesRecursively(Configuration.BuildDropPath?.Value);
+            return directoryWalker.GetFilesRecursively(context.BuildDropPath?.Value);
         }
 
         protected override (ChannelReader<JsonDocWithSerializer> results, ChannelReader<FileValidationResult> errors) WriteAdditionalItems(IList<ISbomConfig> requiredConfigs)

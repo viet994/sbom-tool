@@ -29,7 +29,8 @@ namespace Microsoft.Sbom.Api.Manifest.ManifestConfigHandlers
         public SPDX22ManifestConfigHandler(
             IConfiguration configuration,
             IFileSystemUtils fileSystemUtils,
-            IMetadataBuilderFactory metadataBuilderFactory)
+            IMetadataBuilderFactory metadataBuilderFactory,
+            IContext context)
         {
             if (metadataBuilderFactory is null)
             {
@@ -39,7 +40,7 @@ namespace Microsoft.Sbom.Api.Manifest.ManifestConfigHandlers
             this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
             this.fileSystemUtils = fileSystemUtils ?? throw new ArgumentNullException(nameof(fileSystemUtils));
 
-            string manifestDirPath = configuration.ManifestDirPath.Value;
+            string manifestDirPath = context.ManifestDirPath.Value;
 
             // directory path for SPDX 2.2 is 
             // root/_manifest/spdx_2.2/

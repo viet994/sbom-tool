@@ -34,8 +34,9 @@ namespace Microsoft.Sbom.Api.Providers.FilesProviders
             FileHasher fileHasher,
             ManifestFolderFilterer fileFilterer,
             FileInfoWriter fileHashWriter,
-            InternalSBOMFileInfoDeduplicator internalSBOMFileInfoDeduplicator)
-            : base(configuration, channelUtils, log)
+            InternalSBOMFileInfoDeduplicator internalSBOMFileInfoDeduplicator,
+            IContext context)
+            : base(configuration, channelUtils, log, context)
         {
             this.fileHasher = fileHasher ?? throw new ArgumentNullException(nameof(fileHasher));
             this.fileFilterer = fileFilterer ?? throw new ArgumentNullException(nameof(fileFilterer));
@@ -60,7 +61,7 @@ namespace Microsoft.Sbom.Api.Providers.FilesProviders
             var (jsonDocCount, jsonErrors) = fileHashWriter.Write(fileInfos, requiredConfigs);
             errors.Add(jsonErrors);
 
-            return (jsonDocCount, ChannelUtils.Merge(errors.ToArray()));
+            return (jsonDocCount, channelUtils.Merge(errors.ToArray()));
         }
     }
 }

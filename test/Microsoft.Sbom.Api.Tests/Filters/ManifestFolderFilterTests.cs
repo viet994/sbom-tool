@@ -20,9 +20,11 @@ namespace Microsoft.Sbom.Api.Filters.Tests
             mockOSUtils.Setup(o => o.GetFileSystemStringComparisonType()).Returns(StringComparison.CurrentCultureIgnoreCase);
 
             var configMock = new Mock<IConfiguration>();
-            configMock.SetupGet(c => c.ManifestDirPath).Returns(new ConfigurationSetting<string> { Value = "C:/test/_manifest" });
 
-            var filter = new ManifestFolderFilter(configMock.Object, fileSystemMock.Object, mockOSUtils.Object);
+            var contextMock = new Mock<IContext>();
+            contextMock.SetupGet(c => c.ManifestDirPath).Returns(new ConfigurationSetting<string> { Value = "C:/test/_manifest" });
+
+            var filter = new ManifestFolderFilter(configMock.Object, fileSystemMock.Object, mockOSUtils.Object, contextMock.Object);
             filter.Init();
 
             Assert.IsTrue(filter.IsValid("c:/test"));

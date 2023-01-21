@@ -31,8 +31,9 @@ namespace Microsoft.Sbom.Api.Providers.PackagesProviders
             ISbomConfigProvider sbomConfigs,
             PackageInfoJsonWriter packageInfoJsonWriter,
             ComponentToPackageInfoConverter packageInfoConverter,
-            PackagesWalker packagesWalker)
-            : base(configuration, channelUtils, logger, sbomConfigs, packageInfoJsonWriter)
+            PackagesWalker packagesWalker,
+            IContext context)
+            : base(configuration, channelUtils, logger, sbomConfigs, packageInfoJsonWriter, context)
         {
             this.packageInfoConverter = packageInfoConverter ?? throw new ArgumentNullException(nameof(packageInfoConverter));
             this.packagesWalker = packagesWalker ?? throw new ArgumentNullException(nameof(packagesWalker));
@@ -42,7 +43,7 @@ namespace Microsoft.Sbom.Api.Providers.PackagesProviders
         {
             if (providerType == ProviderType.Packages)
             {
-                if (Configuration.PackagesList?.Value == null)
+                if (context.PackagesList?.Value == null)
                 {
                     // If no other packages providers are present, use this one.
                     Log.Debug($"Using the {nameof(CGScannedPackagesProvider)} provider for the packages workflow.");
@@ -66,12 +67,12 @@ namespace Microsoft.Sbom.Api.Providers.PackagesProviders
             var (jsonResults, jsonErrors) = PackageInfoJsonWriter.Write(packageInfos, requiredConfigs);
             errors.Add(jsonErrors);
 
-            return (jsonResults, ChannelUtils.Merge(errors.ToArray()));
+            return (jsonResults, channelUtils.Merge(errors.ToArray()));
         }
 
         protected override (ChannelReader<ScannedComponent> entities, ChannelReader<FileValidationResult> errors) GetSourceChannel()
         {
-            var (output, cdErrors) = packagesWalker.GetComponents(Configuration.BuildComponentPath?.Value);
+            var (output, cdErrors) = packagesWalker.GetComponents(context.BuildComponentPath?.Value);
 
             if (cdErrors.TryRead(out ComponentDetectorException e))
             {

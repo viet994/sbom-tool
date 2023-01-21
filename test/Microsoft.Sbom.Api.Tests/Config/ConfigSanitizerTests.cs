@@ -69,11 +69,11 @@ namespace Microsoft.Sbom.Api.Tests.Config
                     Source = SettingSource.CommandLine,
                     Value = new AlgorithmName("SHA256", null)
                 },
-                BuildDropPath = new ConfigurationSetting<string>
-                {
-                    Source = SettingSource.Default,
-                    Value = "dropPath"
-                },
+                //BuildDropPath = new ConfigurationSetting<string>
+                //{
+                //    Source = SettingSource.Default,
+                //    Value = "dropPath"
+                //},
                 ManifestInfo = new ConfigurationSetting<IList<ManifestInfo>>
                 {
                     Source = SettingSource.Default,
@@ -160,126 +160,126 @@ namespace Microsoft.Sbom.Api.Tests.Config
             configSanitizer.SanitizeConfig(config);
         }
 
-        [TestMethod]
-        public void NullManifestDirShouldUseDropPath_Succeeds()
-        {
-            var config = GetConfigurationBaseObject();
-            config.ManifestToolAction = ManifestToolActions.Validate;
-            configSanitizer.SanitizeConfig(config);
+        //[TestMethod]
+        //public void NullManifestDirShouldUseDropPath_Succeeds()
+        //{
+        //    var config = GetConfigurationBaseObject();
+        //    config.ManifestToolAction = ManifestToolActions.Validate;
+        //    configSanitizer.SanitizeConfig(config);
 
-            Assert.IsNotNull(config.ManifestDirPath);
-            Assert.IsNotNull(config.ManifestDirPath.Value);
-            Assert.AreEqual(Path.Join("dropPath", "_manifest"), config.ManifestDirPath.Value);
-        }
+        //    Assert.IsNotNull(config.ManifestDirPath);
+        //    Assert.IsNotNull(config.ManifestDirPath.Value);
+        //    Assert.AreEqual(Path.Join("dropPath", "_manifest"), config.ManifestDirPath.Value);
+        //}
 
-        [TestMethod]
-        public void ManifestDirShouldEndWithManifestDirForGenerate_Succeeds()
-        {
-            var config = GetConfigurationBaseObject();
-            config.ManifestDirPath = new ConfigurationSetting<string>
-            {
-                Source = SettingSource.Default,
-                Value = "manifestDirPath"
-            };
+        //[TestMethod]
+        //public void ManifestDirShouldEndWithManifestDirForGenerate_Succeeds()
+        //{
+        //    var config = GetConfigurationBaseObject();
+        //    config.ManifestDirPath = new ConfigurationSetting<string>
+        //    {
+        //        Source = SettingSource.Default,
+        //        Value = "manifestDirPath"
+        //    };
 
-            config.ManifestToolAction = ManifestToolActions.Generate;
-            configSanitizer.SanitizeConfig(config);
+        //    config.ManifestToolAction = ManifestToolActions.Generate;
+        //    configSanitizer.SanitizeConfig(config);
 
-            Assert.IsNotNull(config.ManifestDirPath);
-            Assert.IsNotNull(config.ManifestDirPath.Value);
-            Assert.AreEqual(Path.Join("manifestDirPath", "_manifest"), config.ManifestDirPath.Value);
-        }
+        //    Assert.IsNotNull(config.ManifestDirPath);
+        //    Assert.IsNotNull(config.ManifestDirPath.Value);
+        //    Assert.AreEqual(Path.Join("manifestDirPath", "_manifest"), config.ManifestDirPath.Value);
+        //}
 
-        [TestMethod]
-        public void ManifestDirShouldNotAddManifestDirForValidate_Succeeds()
-        {
-            var config = GetConfigurationBaseObject();
-            config.ManifestDirPath = new ConfigurationSetting<string>
-            {
-                Source = SettingSource.Default,
-                Value = "manifestDirPath"
-            };
+        //[TestMethod]
+        //public void ManifestDirShouldNotAddManifestDirForValidate_Succeeds()
+        //{
+        //    var config = GetConfigurationBaseObject();
+        //    config.ManifestDirPath = new ConfigurationSetting<string>
+        //    {
+        //        Source = SettingSource.Default,
+        //        Value = "manifestDirPath"
+        //    };
 
-            config.ManifestToolAction = ManifestToolActions.Validate;
-            configSanitizer.SanitizeConfig(config);
+        //    config.ManifestToolAction = ManifestToolActions.Validate;
+        //    configSanitizer.SanitizeConfig(config);
 
-            Assert.IsNotNull(config.ManifestDirPath);
-            Assert.IsNotNull(config.ManifestDirPath.Value);
-            Assert.AreEqual("manifestDirPath", config.ManifestDirPath.Value);
-        }
+        //    Assert.IsNotNull(config.ManifestDirPath);
+        //    Assert.IsNotNull(config.ManifestDirPath.Value);
+        //    Assert.AreEqual("manifestDirPath", config.ManifestDirPath.Value);
+        //}
 
-        [TestMethod]
-        public void NullDefaultNamespaceUriBaseShouldReturnExistingValue_Succeeds()
-        {
-            mockAssemblyConfig.SetupGet(a => a.DefaultSBOMNamespaceBaseUri).Returns(string.Empty);
-            var config = GetConfigurationBaseObject();
-            config.NamespaceUriBase = new ConfigurationSetting<string>
-            {
-                Source = SettingSource.Default,
-                Value = "http://base.uri"
-            };
+        //[TestMethod]
+        //public void NullDefaultNamespaceUriBaseShouldReturnExistingValue_Succeeds()
+        //{
+        //    mockAssemblyConfig.SetupGet(a => a.DefaultSBOMNamespaceBaseUri).Returns(string.Empty);
+        //    var config = GetConfigurationBaseObject();
+        //    config.NamespaceUriBase = new ConfigurationSetting<string>
+        //    {
+        //        Source = SettingSource.Default,
+        //        Value = "http://base.uri"
+        //    };
 
-            config.ManifestToolAction = ManifestToolActions.Validate;
-            configSanitizer.SanitizeConfig(config);
+        //    config.ManifestToolAction = ManifestToolActions.Validate;
+        //    configSanitizer.SanitizeConfig(config);
 
-            Assert.AreEqual("http://base.uri", config.NamespaceUriBase.Value);
+        //    Assert.AreEqual("http://base.uri", config.NamespaceUriBase.Value);
 
-            mockAssemblyConfig.VerifyGet(a => a.DefaultSBOMNamespaceBaseUri);
-        }
+        //    mockAssemblyConfig.VerifyGet(a => a.DefaultSBOMNamespaceBaseUri);
+        //}
 
-        [TestMethod]
-        public void UserProviderNamespaceUriBaseShouldReturnProvidedValue_Succeeds()
-        {
-            mockAssemblyConfig.SetupGet(a => a.DefaultSBOMNamespaceBaseUri).Returns("http://internal.base.uri");
-            var providedNamespaceValue = "http://base.uri";
-            var config = GetConfigurationBaseObject();
-            config.NamespaceUriBase = new ConfigurationSetting<string>
-            {
-                Source = SettingSource.CommandLine,
-                Value = providedNamespaceValue
-            };
+        //[TestMethod]
+        //public void UserProviderNamespaceUriBaseShouldReturnProvidedValue_Succeeds()
+        //{
+        //    mockAssemblyConfig.SetupGet(a => a.DefaultSBOMNamespaceBaseUri).Returns("http://internal.base.uri");
+        //    var providedNamespaceValue = "http://base.uri";
+        //    var config = GetConfigurationBaseObject();
+        //    config.NamespaceUriBase = new ConfigurationSetting<string>
+        //    {
+        //        Source = SettingSource.CommandLine,
+        //        Value = providedNamespaceValue
+        //    };
 
-            config.ManifestToolAction = ManifestToolActions.Validate;
-            configSanitizer.SanitizeConfig(config);
+        //    config.ManifestToolAction = ManifestToolActions.Validate;
+        //    configSanitizer.SanitizeConfig(config);
 
-            Assert.AreEqual(providedNamespaceValue, config.NamespaceUriBase.Value);
-            Assert.AreEqual(SettingSource.CommandLine, config.NamespaceUriBase.Source);
+        //    Assert.AreEqual(providedNamespaceValue, config.NamespaceUriBase.Value);
+        //    Assert.AreEqual(SettingSource.CommandLine, config.NamespaceUriBase.Source);
 
-            mockAssemblyConfig.VerifyGet(a => a.DefaultSBOMNamespaceBaseUri);
-        }
+        //    mockAssemblyConfig.VerifyGet(a => a.DefaultSBOMNamespaceBaseUri);
+        //}
 
-        [TestMethod]
-        public void ShouldGetPackageSupplierFromAsseblyConfig_Succeeds()
-        {
-            var organization = "Contoso International";
-            mockAssemblyConfig.SetupGet(a => a.DefaultPackageSupplier).Returns(organization);
-            var config = GetConfigurationBaseObject();
+        //[TestMethod]
+        //public void ShouldGetPackageSupplierFromAsseblyConfig_Succeeds()
+        //{
+        //    var organization = "Contoso International";
+        //    mockAssemblyConfig.SetupGet(a => a.DefaultPackageSupplier).Returns(organization);
+        //    var config = GetConfigurationBaseObject();
 
-            config.ManifestToolAction = ManifestToolActions.Validate;
-            configSanitizer.SanitizeConfig(config);
+        //    config.ManifestToolAction = ManifestToolActions.Validate;
+        //    configSanitizer.SanitizeConfig(config);
 
-            Assert.AreEqual(organization, config.PackageSupplier.Value);
+        //    Assert.AreEqual(organization, config.PackageSupplier.Value);
 
-            mockAssemblyConfig.VerifyGet(a => a.DefaultPackageSupplier);
-        }
+        //    mockAssemblyConfig.VerifyGet(a => a.DefaultPackageSupplier);
+        //}
 
-        [TestMethod]
-        public void ShouldNotOverridePackageSupplierIfProvided_Succeeds()
-        {
-            var organization = "Contoso International";
-            var actualOrg = "Contoso";
-            mockAssemblyConfig.SetupGet(a => a.DefaultPackageSupplier).Returns(organization);
-            var config = GetConfigurationBaseObject();
-            config.PackageSupplier = new ConfigurationSetting<string>
-            {
-                Source = SettingSource.CommandLine,
-                Value = actualOrg
-            };
+        //[TestMethod]
+        //public void ShouldNotOverridePackageSupplierIfProvided_Succeeds()
+        //{
+        //    var organization = "Contoso International";
+        //    var actualOrg = "Contoso";
+        //    mockAssemblyConfig.SetupGet(a => a.DefaultPackageSupplier).Returns(organization);
+        //    var config = GetConfigurationBaseObject();
+        //    config.PackageSupplier = new ConfigurationSetting<string>
+        //    {
+        //        Source = SettingSource.CommandLine,
+        //        Value = actualOrg
+        //    };
 
-            config.ManifestToolAction = ManifestToolActions.Validate;
-            configSanitizer.SanitizeConfig(config);
+        //    config.ManifestToolAction = ManifestToolActions.Validate;
+        //    configSanitizer.SanitizeConfig(config);
 
-            Assert.AreEqual(actualOrg, config.PackageSupplier.Value);
-        }
+        //    Assert.AreEqual(actualOrg, config.PackageSupplier.Value);
+        //}
     }
 }

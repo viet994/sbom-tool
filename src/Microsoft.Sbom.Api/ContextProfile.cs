@@ -18,53 +18,50 @@ namespace Microsoft.Sbom.Api
     /// Provides a named profile for the automapper that
     /// generates a mapping for all the classes that map to a configuration object.
     /// </summary>
-    public class ConfigurationProfile : Profile
+    public class ContextProfile : Profile
     {
-        public ConfigurationProfile()
+        public ContextProfile()
         {
             // Create config for the validation args, ignoring other action members
-            CreateMap<ValidationArgs, Configuration>()
-//#pragma warning disable CS0618 // 'Configuration.ManifestPath' is obsolete: 'This field is not provided by the user or configFile, set by system'
-//                .ForMember(nameof(Configuration.ManifestPath), o => o.Ignore())
-//#pragma warning restore CS0618 // 'Configuration.ManifestPath' is obsolete: 'This field is not provided by the user or configFile, set by system'
-                //.ForMember(nameof(Configuration.PackageName), o => o.Ignore())
-                //.ForMember(nameof(Configuration.PackageVersion), o => o.Ignore())
-                //.ForMember(nameof(Configuration.BuildListFile), o => o.Ignore())
-                //.ForMember(nameof(Configuration.ExternalDocumentReferenceListFile), o => o.Ignore())
-                //.ForMember(nameof(Configuration.BuildComponentPath), o => o.Ignore())
-                //.ForMember(nameof(Configuration.PackagesList), o => o.Ignore())
-                //.ForMember(nameof(Configuration.FilesList), o => o.Ignore())
-                //.ForMember(nameof(Configuration.DockerImagesToScan), o => o.Ignore())
-                .ForMember(nameof(Configuration.AdditionalComponentDetectorArgs), o => o.Ignore())
-                //.ForMember(nameof(Configuration.GenerationTimestamp), o => o.Ignore())
-                //.ForMember(nameof(Configuration.NamespaceUriUniquePart), o => o.Ignore())
-                //.ForMember(nameof(Configuration.NamespaceUriBase), o => o.Ignore())
-                .ForMember(nameof(Configuration.DeleteManifestDirIfPresent), o => o.Ignore());
-            //.ForMember(nameof(Configuration.PackageSupplier), o => o.Ignore());
+            CreateMap<ValidationArgs, ContextAdapter>()
+#pragma warning disable CS0618 // 'Configuration.ManifestPath' is obsolete: 'This field is not provided by the user or configFile, set by system'
+                .ForMember(c => c.ManifestPath, o => o.Ignore())
+#pragma warning restore CS0618 // 'Configuration.ManifestPath' is obsolete: 'This field is not provided by the user or configFile, set by system'
+                .ForMember(c => c.PackageName, o => o.Ignore())
+                .ForMember(c => c.PackageVersion, o => o.Ignore())
+                .ForMember(c => c.BuildListFile, o => o.Ignore())
+                .ForMember(c => c.ExternalDocumentReferenceListFile, o => o.Ignore())
+                .ForMember(c => c.BuildComponentPath, o => o.Ignore())
+                .ForMember(c => c.PackagesList, o => o.Ignore())
+                .ForMember(c => c.FilesList, o => o.Ignore())
+                .ForMember(c => c.DockerImagesToScan, o => o.Ignore())
+                .ForMember(c => c.GenerationTimestamp, o => o.Ignore())
+                .ForMember(c => c.NamespaceUriUniquePart, o => o.Ignore())
+                .ForMember(c => c.NamespaceUriBase, o => o.Ignore())
+                .ForMember(c => c.PackageSupplier, o => o.Ignore());
 
             // Create config for the generation args, ignoring other action members
-            CreateMap<GenerationArgs, Configuration>();
-//#pragma warning disable CS0618 // 'Configuration.ManifestPath' is obsolete: 'This field is not provided by the user or configFile, set by system'
-                //.ForMember(nameof(Configuration.ManifestPath), o => o.Ignore())
-//#pragma warning restore CS0618 // 'Configuration.ManifestPath' is obsolete: 'This field is not provided by the user or configFile, set by system'
-                //.ForMember(nameof(Configuration.OutputPath), o => o.Ignore())
-                //.ForMember(nameof(Configuration.HashAlgorithm), o => o.Ignore())
-                //.ForMember(nameof(Configuration.RootPathFilter), o => o.Ignore())
-                //.ForMember(nameof(Configuration.CatalogFilePath), o => o.Ignore())
-                //.ForMember(nameof(Configuration.ValidateSignature), o => o.Ignore())
-                //.ForMember(nameof(Configuration.PackagesList), o => o.Ignore())
-                //.ForMember(nameof(Configuration.FilesList), o => o.Ignore())
-                //.ForMember(nameof(Configuration.IgnoreMissing), o => o.Ignore());
+            CreateMap<GenerationArgs, ContextAdapter>() // TODO: should this be ContextAdapter?
+#pragma warning disable CS0618 // 'Configuration.ManifestPath' is obsolete: 'This field is not provided by the user or configFile, set by system'
+                .ForMember(c => c.ManifestPath, o => o.Ignore())
+#pragma warning restore CS0618 // 'Configuration.ManifestPath' is obsolete: 'This field is not provided by the user or configFile, set by system'
+                .ForMember(c => c.OutputPath, o => o.Ignore())
+                .ForMember(c => c.RootPathFilter, o => o.Ignore())
+                .ForMember(c => c.CatalogFilePath, o => o.Ignore())
+                .ForMember(c => c.ValidateSignature, o => o.Ignore())
+                .ForMember(c => c.PackagesList, o => o.Ignore())
+                .ForMember(c => c.FilesList, o => o.Ignore())
+                .ForMember(c => c.IgnoreMissing, o => o.Ignore());
 
             // Create config for the config json file to configuration.
-            CreateMap<ConfigFile, Configuration>();
-                //.ForMember(nameof(Configuration.PackagesList), o => o.Ignore());
-                //.ForMember(nameof(Configuration.FilesList), o => o.Ignore());
+            CreateMap<ConfigFile, ContextAdapter>()
+                .ForMember(c => c.PackagesList, o => o.Ignore())
+                .ForMember(c => c.FilesList, o => o.Ignore());
 
             // Add maps to combine both config json and argument args,
             // validate each settings using the config validator.
-            CreateMap<Configuration, Configuration>()
-                    .AfterMap<ConfigPostProcessor>()
+            CreateMap<ContextAdapter, ContextAdapter>()
+                    .AfterMap<ContextPostProcessor>()
                     .ForAllMembers(dest => dest.Condition((src, dest, srcObj, dstObj) =>
                     {
                         // If the property is set in both source and destination (config and cmdline),

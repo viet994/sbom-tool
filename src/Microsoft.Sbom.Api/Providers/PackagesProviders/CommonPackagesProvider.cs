@@ -30,8 +30,9 @@ namespace Microsoft.Sbom.Api.Providers.PackagesProviders
             ChannelUtils channelUtils,
             ILogger logger,
             ISbomConfigProvider sbomConfigs,
-            PackageInfoJsonWriter packageInfoJsonWriter)
-            : base(configuration, channelUtils, logger)
+            PackageInfoJsonWriter packageInfoJsonWriter,
+            IContext context)
+            : base(configuration, channelUtils, logger, context)
         {
             this.sbomConfigs = sbomConfigs ?? throw new ArgumentNullException(nameof(sbomConfigs));
             PackageInfoJsonWriter = packageInfoJsonWriter ?? throw new ArgumentNullException(nameof(packageInfoJsonWriter));

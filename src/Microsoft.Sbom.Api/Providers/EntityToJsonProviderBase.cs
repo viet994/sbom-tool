@@ -19,23 +19,20 @@ namespace Microsoft.Sbom.Api.Providers
     /// <typeparam name="T"></typeparam>
     public abstract class EntityToJsonProviderBase<T> : ISourcesProvider
     {
-        /// <summary>
-        /// Gets or sets the configuration that is used to generate the SBOM.
-        /// </summary>
-        public IConfiguration Configuration { get; }
+        protected readonly IConfiguration configuration;
 
-        /// <summary>
-        /// Gets or sets provides utilities for splitting and merging channel streams.
-        /// </summary>
-        public ChannelUtils ChannelUtils { get; }
+        protected readonly ChannelUtils channelUtils;
 
-        public ILogger Log { get; }
+        private readonly ILogger logger;
 
-        public EntityToJsonProviderBase(IConfiguration configuration, ChannelUtils channelUtils, ILogger logger)
+        protected readonly IContext context;
+
+        public EntityToJsonProviderBase(IConfiguration configuration, ChannelUtils channelUtils, ILogger logger, IContext context)
         {
-            Configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-            ChannelUtils = channelUtils ?? throw new ArgumentNullException(nameof(channelUtils));
-            Log = logger ?? throw new ArgumentNullException(nameof(logger));
+            this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+            this.channelUtils = channelUtils ?? throw new ArgumentNullException(nameof(channelUtils));
+            this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            this.context = context;
         }
 
         /// <summary>
@@ -57,10 +54,10 @@ namespace Microsoft.Sbom.Api.Providers
             var (sources, sourceErrors) = GetSourceChannel();
             errors.Add(sourceErrors);
 
-            Log.Debug($"Splitting the workflow into {Configuration.Parallelism.Value} threads.");
-            var splitSourcesChannels = ChannelUtils.Split(sources, Configuration.Parallelism.Value);
+            logger.Debug($"Splitting the workflow into {configuration.Parallelism.Value} threads.");
+            var splitSourcesChannels = channelUtils.Split(sources, configuration.Parallelism.Value);
 
-            Log.Debug("Running the generation workflow ...");
+            logger.Debug("Running the generation workflow ...");
 
             foreach (var sourceChannel in splitSourcesChannels)
             {
@@ -82,7 +79,7 @@ namespace Microsoft.Sbom.Api.Providers
                 errors.Add(additionalErrors);
             }
 
-            return (ChannelUtils.Merge(jsonDocResults.ToArray()), ChannelUtils.Merge(errors.ToArray()));
+            return (channelUtils.Merge(jsonDocResults.ToArray()), channelUtils.Merge(errors.ToArray()));
         }
 
         /// <summary>

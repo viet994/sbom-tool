@@ -32,8 +32,9 @@ namespace Microsoft.Sbom.Api.Providers.FilesProviders
             ILogger logger,
             FileInfoWriter fileHashWriter,
             SBOMFileToFileInfoConverter sbomFileToFileInfoConverter,
-            InternalSBOMFileInfoDeduplicator fileInfo)
-            : base(configuration, channelUtils, logger)
+            InternalSBOMFileInfoDeduplicator fileInfo,
+            IContext context)
+            : base(configuration, channelUtils, logger, context)
         {
             this.fileHashWriter = fileHashWriter ?? throw new ArgumentNullException(nameof(fileHashWriter));
             this.sbomFileToFileInfoConverter = sbomFileToFileInfoConverter ?? throw new ArgumentNullException(nameof(sbomFileToFileInfoConverter));
@@ -49,7 +50,7 @@ namespace Microsoft.Sbom.Api.Providers.FilesProviders
         {
             if (providerType == ProviderType.Files)
             {
-                if (Configuration.FilesList?.Value != null && string.IsNullOrWhiteSpace(Configuration.BuildListFile?.Value))
+                if (context.FilesList?.Value != null && string.IsNullOrWhiteSpace(context.BuildListFile?.Value))
                 {
                     Log.Debug($"Using the {nameof(SBOMFileBasedFileToJsonProvider)} provider for the files workflow.");
                     return true;
@@ -71,13 +72,13 @@ namespace Microsoft.Sbom.Api.Providers.FilesProviders
             var (jsonDocCount, jsonErrors) = fileHashWriter.Write(fileInfos, requiredConfigs);
             errors.Add(jsonErrors);
 
-            return (jsonDocCount, ChannelUtils.Merge(errors.ToArray()));
+            return (jsonDocCount, channelUtils.Merge(errors.ToArray()));
         }
 
         protected override (ChannelReader<SBOMFile> entities, ChannelReader<FileValidationResult> errors) GetSourceChannel()
         {
             var listWalker = new ListWalker<SBOMFile>();
-            return listWalker.GetComponents(Configuration.FilesList.Value);
+            return listWalker.GetComponents(context.FilesList.Value);
         }
 
         protected override (ChannelReader<JsonDocWithSerializer> results, ChannelReader<FileValidationResult> errors)

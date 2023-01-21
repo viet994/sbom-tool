@@ -21,18 +21,21 @@ namespace Microsoft.Sbom.Api.Executors
         private readonly IFilter<DownloadedRootPathFilter> rootPathFilter;
         private readonly ILogger log;
         private readonly IFileSystemUtils fileSystemUtils;
+        private readonly IContext context;
         private readonly IConfiguration configuration;
 
         public FileFilterer(
             IFilter<DownloadedRootPathFilter> rootPathFilter,
             ILogger log,
             IConfiguration configuration,
-            IFileSystemUtils fileSystemUtils)
+            IFileSystemUtils fileSystemUtils,
+            IContext context)
         {
             this.rootPathFilter = rootPathFilter ?? throw new ArgumentNullException(nameof(rootPathFilter));
             this.log = log ?? throw new ArgumentNullException(nameof(log));
             this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
             this.fileSystemUtils = fileSystemUtils ?? throw new ArgumentNullException(nameof(fileSystemUtils));
+            this.context = context;
         }
 
         public (ChannelReader<InternalSBOMFileInfo> files, ChannelReader<FileValidationResult> errors) Filter(ChannelReader<InternalSBOMFileInfo> files)
@@ -71,7 +74,7 @@ namespace Microsoft.Sbom.Api.Executors
                 }
 
                 // Filter paths that are not present on disk.
-                var fullPath = fileSystemUtils.JoinPaths(configuration.BuildDropPath.Value, file.Path);
+                var fullPath = fileSystemUtils.JoinPaths(context.BuildDropPath.Value, file.Path);
                 if (!rootPathFilter.IsValid(fullPath))
                 {
                     await errors.Writer.WriteAsync(new FileValidationResult

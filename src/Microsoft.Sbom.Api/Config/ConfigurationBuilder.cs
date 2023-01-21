@@ -17,6 +17,7 @@ namespace Microsoft.Sbom.Api.Config
     /// </summary>
     /// <typeparam name="T">The action args parameter.</typeparam>
     public class ConfigurationBuilder<T> : IConfigurationBuilder<T>
+        where T : CommonArgs
     {
         private readonly IMapper mapper;
         private readonly ConfigFileParser configFileParser;
@@ -40,6 +41,9 @@ namespace Microsoft.Sbom.Api.Config
                     break;
                 case GenerationArgs generationArgs:
                     generationArgs.ManifestToolAction = ManifestToolActions.Generate;
+                    ContextAdapter.SetBuildDropPath(new (generationArgs.BuildDropPath));
+                    ContextAdapter.SetManifestDirPath(new (generationArgs.ManifestDirPath));
+                    ContextAdapter.SetNamespaceBaseUri(new (generationArgs.NamespaceUriBase));
                     commandLineArgs = mapper.Map<Configuration>(generationArgs);
                     break;
                 default:
@@ -59,7 +63,8 @@ namespace Microsoft.Sbom.Api.Config
         }
     }
 
-    public interface IConfigurationBuilder<T>
+    public interface IConfigurationBuilder<T> 
+        where T : CommonArgs
     {
         Task<IConfiguration> GetConfiguration(T args);
     }

@@ -48,11 +48,11 @@ namespace Microsoft.Sbom.Api.Tests
         [TestMethod]
         public async Task When_GenerateSbomAsync_WithRecordedErrors_Then_PopulateEntityErrors()
         {
-            var fileValidationResults = new List<FileValidationResult>
-            {
-                new FileValidationResult() { Path = "random", ErrorType = ErrorType.Other }
-            };
+            var fileValidationResults = new List<FileValidationResult>();
+            fileValidationResults.Add(new FileValidationResult() { Path = "random", ErrorType = ErrorType.Other });
 
+            //kernel.Bind<IWorkflow>().ToMethod(x => mockWorkflow.Object).Named(nameof(SBOMGenerationWorkflow));
+            //kernel.Bind<IRecorder>().ToMethod(x => mockRecorder.Object).InSingletonScope();
             mockRecorder.Setup(c => c.Errors).Returns(fileValidationResults).Verifiable();
             mockWorkflow.Setup(c => c.RunAsync()).Returns(Task.FromResult(true)).Verifiable();
 
@@ -62,7 +62,7 @@ namespace Microsoft.Sbom.Api.Tests
             };
 
             generator = new SBOMGenerator(mockWorkflow.Object, mockGeneratorProvider.Object, mockRecorder.Object);
-            var result = await generator.GenerateSBOMAsync();
+            var result = await generator.GenerateSBOMAsync("rootPath"/*, "compPath", metadata, configuration: runtimeConfiguration*/);
 
             Assert.AreEqual(1, result.Errors.Count);
             Assert.AreEqual(EntityErrorType.Other, result.Errors[0].ErrorType);
@@ -83,7 +83,7 @@ namespace Microsoft.Sbom.Api.Tests
             };
 
             generator = new SBOMGenerator(mockWorkflow.Object, mockGeneratorProvider.Object, mockRecorder.Object);
-            var result = await generator.GenerateSBOMAsync();
+            var result = await generator.GenerateSBOMAsync("rootPath");
 
             Assert.AreEqual(0, result.Errors.Count);
             mockRecorder.Verify();

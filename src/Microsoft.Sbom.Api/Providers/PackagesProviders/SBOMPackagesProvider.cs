@@ -23,8 +23,9 @@ namespace Microsoft.Sbom.Api.Providers.PackagesProviders
             ChannelUtils channelUtils,
             ILogger logger,
             ISbomConfigProvider sbomConfigs,
-            PackageInfoJsonWriter packageInfoJsonWriter)
-            : base(configuration, channelUtils, logger, sbomConfigs, packageInfoJsonWriter)
+            PackageInfoJsonWriter packageInfoJsonWriter,
+            IContext context)
+            : base(configuration, channelUtils, logger, sbomConfigs, packageInfoJsonWriter, context)
         {
         }
 
@@ -32,7 +33,7 @@ namespace Microsoft.Sbom.Api.Providers.PackagesProviders
         {
             if (providerType == ProviderType.Packages)
             {
-                if (Configuration.PackagesList?.Value != null)
+                if (context.PackagesList?.Value != null)
                 {
                     Log.Debug($"Using the {nameof(SBOMPackagesProvider)} provider for the packages workflow.");
                     return true;
@@ -48,13 +49,13 @@ namespace Microsoft.Sbom.Api.Providers.PackagesProviders
             var (jsonDocCount, jsonErrors) = PackageInfoJsonWriter.Write(sourceChannel, requiredConfigs);
             errors.Add(jsonErrors);
 
-            return (jsonDocCount, ChannelUtils.Merge(errors.ToArray()));
+            return (jsonDocCount, channelUtils.Merge(errors.ToArray()));
         }
 
         protected override (ChannelReader<SBOMPackage> entities, ChannelReader<FileValidationResult> errors) GetSourceChannel()
         {
             var listWalker = new ListWalker<SBOMPackage>();
-            return listWalker.GetComponents(Configuration.PackagesList.Value);
+            return listWalker.GetComponents(context.PackagesList.Value);
         }
     }
 }

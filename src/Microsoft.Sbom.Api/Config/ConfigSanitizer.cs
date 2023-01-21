@@ -48,16 +48,16 @@ namespace Microsoft.Sbom.Api.Config
             configuration.HashAlgorithm = GetHashAlgorithmName(configuration);
 
             // set ManifestDirPath after validation of DirectoryExist and DirectoryPathIsWritable, this wouldn't exist because it needs to be created by the tool.
-            configuration.ManifestDirPath = GetManifestDirPath(configuration.ManifestDirPath, configuration.BuildDropPath.Value, configuration.ManifestToolAction);
+            //configuration.ManifestDirPath = GetManifestDirPath(configuration.ManifestDirPath, configuration.BuildDropPath.Value, configuration.ManifestToolAction);
 
             // Set namespace value if provided in the assembly
-            configuration.NamespaceUriBase = GetNamespaceBaseUriFromAssembly(configuration, logger);
+            //configuration.NamespaceUriBase = GetNamespaceBaseUriFromAssembly(configuration, logger);
 
             // Set default ManifestInfo for validation in case user doesn't provide a value.
             configuration.ManifestInfo = GetDefaultManifestInfoForValidationAction(configuration);
 
             // Set default package supplier if not provided in configuration.
-            configuration.PackageSupplier = GetPackageSupplierFromAssembly(configuration, logger);
+            //configuration.PackageSupplier = GetPackageSupplierFromAssembly(configuration, logger);
 
             logger.Dispose();
 
@@ -106,57 +106,57 @@ namespace Microsoft.Sbom.Api.Config
             };
         }
 
-        private ConfigurationSetting<string> GetNamespaceBaseUriFromAssembly(Configuration configuration, ILogger logger)
-        {
-            // If assembly name is not defined returned the current value.
-            if (string.IsNullOrWhiteSpace(assemblyConfig.DefaultSBOMNamespaceBaseUri))
-            {
-                return configuration.NamespaceUriBase;
-            }
+        //private ConfigurationSetting<string> GetNamespaceBaseUriFromAssembly(Configuration configuration, ILogger logger)
+        //{
+        //    // If assembly name is not defined returned the current value.
+        //    //if (string.IsNullOrWhiteSpace(assemblyConfig.DefaultSBOMNamespaceBaseUri))
+        //    //{
+        //    //    return configuration.NamespaceUriBase;
+        //    //}
 
-            // If the user provides the parameter even when the assembly attribute is provided, 
-            // show a warning on the console.
-            if (!string.IsNullOrWhiteSpace(configuration.NamespaceUriBase?.Value))
-            {
-                if (!string.IsNullOrWhiteSpace(assemblyConfig.DefaultSBOMNamespaceBaseUri))
-                {
-                    logger.Information("Custom namespace URI base provided, using provided value instead of default");
-                }
+        //    // If the user provides the parameter even when the assembly attribute is provided, 
+        //    // show a warning on the console.
+        //    if (!string.IsNullOrWhiteSpace(configuration.NamespaceUriBase?.Value))
+        //    {
+        //        if (!string.IsNullOrWhiteSpace(assemblyConfig.DefaultSBOMNamespaceBaseUri))
+        //        {
+        //            logger.Information("Custom namespace URI base provided, using provided value instead of default");
+        //        }
 
-                return configuration.NamespaceUriBase;
-            }
+        //        return configuration.NamespaceUriBase;
+        //    }
 
-            return new ConfigurationSetting<string>
-            {
-                Source = SettingSource.Default,
-                Value = assemblyConfig.DefaultSBOMNamespaceBaseUri
-            };
-        }
+        //    return new ConfigurationSetting<string>
+        //    {
+        //        Source = SettingSource.Default,
+        //        Value = assemblyConfig.DefaultSBOMNamespaceBaseUri
+        //    };
+        //}
 
-        private ConfigurationSetting<string> GetPackageSupplierFromAssembly(Configuration configuration, ILogger logger)
-        {
-            if (string.IsNullOrWhiteSpace(assemblyConfig.DefaultPackageSupplier))
-            {
-                return configuration.PackageSupplier;
-            }
+        //private ConfigurationSetting<string> GetPackageSupplierFromAssembly(Configuration configuration, ILogger logger)
+        //{
+        //    if (string.IsNullOrWhiteSpace(assemblyConfig.DefaultPackageSupplier))
+        //    {
+        //        return configuration.PackageSupplier;
+        //    }
 
-            // Give priority to package supplier provided as an argument.
-            if (!string.IsNullOrWhiteSpace(configuration.PackageSupplier?.Value))
-            {
-                if (!string.IsNullOrWhiteSpace(assemblyConfig.DefaultPackageSupplier))
-                {
-                    logger.Information("Custom package supplier value provided, using provided value instead of default");
-                }
+        //    // Give priority to package supplier provided as an argument.
+        //    if (!string.IsNullOrWhiteSpace(configuration.PackageSupplier?.Value))
+        //    {
+        //        if (!string.IsNullOrWhiteSpace(assemblyConfig.DefaultPackageSupplier))
+        //        {
+        //            logger.Information("Custom package supplier value provided, using provided value instead of default");
+        //        }
 
-                return configuration.PackageSupplier;
-            }
+        //        return configuration.PackageSupplier;
+        //    }
 
-            return new ConfigurationSetting<string> 
-            { 
-                Source = SettingSource.Default,
-                Value = assemblyConfig.DefaultPackageSupplier
-            };
-        }
+        //    return new ConfigurationSetting<string> 
+        //    { 
+        //        Source = SettingSource.Default,
+        //        Value = assemblyConfig.DefaultPackageSupplier
+        //    };
+        //}
 
         /// <summary>
         /// Set ManifestDirPath if the value is null or empty to default value.

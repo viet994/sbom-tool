@@ -18,14 +18,14 @@ namespace Microsoft.Sbom.Api.Config.Extensions
         /// <summary>
         /// Get the name and value of each IConfiguration property that is annotated with <see cref=ComponentDetectorArgumentAttribute />.
         /// </summary>
-        /// <param name="configuration"></param>
+        /// <param name="obj"></param>
         /// <returns></returns>
-        private static IEnumerable<(string Name, object Value)> GetComponentDetectorArgs(this IConfiguration configuration) => typeof(IConfiguration)
+        private static IEnumerable<(string Name, object Value)> GetComponentDetectorArgs<T>(this T obj) => typeof(T)
             .GetProperties()
             .Where(prop => prop.GetCustomAttributes(typeof(ComponentDetectorArgumentAttribute), true).Any()
                 && prop.PropertyType.GetGenericTypeDefinition() == typeof(ConfigurationSetting<>)
-                && prop.GetValue(configuration) != null)
-            .Select(prop => (prop.Attr<ComponentDetectorArgumentAttribute>().ParameterName, prop.GetValue(configuration)));
+                && prop.GetValue(obj) != null)
+            .Select(prop => (prop.Attr<ComponentDetectorArgumentAttribute>().ParameterName, prop.GetValue(obj)));
 
         /// <summary>
         /// Adds component detection arguments to the builder.
@@ -42,11 +42,16 @@ namespace Microsoft.Sbom.Api.Config.Extensions
         /// <param name="configuration"></param>
         /// <param name="builder"></param>
         /// <returns></returns>
-        public static string[] ToComponentDetectorCommandLineParams(this IConfiguration configuration, ComponentDetectionCliArgumentBuilder builder)
+        public static string[] ToComponentDetectorCommandLineParams(this IConfiguration configuration, ComponentDetectionCliArgumentBuilder builder, IContext context)
         {
             configuration
                 .GetComponentDetectorArgs()
                 .ForEach(arg => arg.AddToCommandLineBuilder(builder));
+
+            context
+                .GetComponentDetectorArgs()
+                .ForEach(arg => arg.AddToCommandLineBuilder(builder));
+
             return builder.Build();
         }
     }

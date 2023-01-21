@@ -29,15 +29,16 @@ namespace Microsoft.Sbom.Api.Providers.FilesProviders
             ManifestFolderFilterer fileFilterer,
             FileInfoWriter fileHashWriter,
             InternalSBOMFileInfoDeduplicator internalSBOMFileInfoDeduplicator,
-            FileListEnumerator listWalker)
-            : base(configuration, channelUtils, log, fileHasher, fileFilterer, fileHashWriter, internalSBOMFileInfoDeduplicator)
+            FileListEnumerator listWalker,
+            IContext context)
+            : base(configuration, channelUtils, log, fileHasher, fileFilterer, fileHashWriter, internalSBOMFileInfoDeduplicator, context)
         {
             this.listWalker = listWalker ?? throw new ArgumentNullException(nameof(listWalker));
         }
 
         public override bool IsSupported(ProviderType providerType)
         {
-            if (providerType == ProviderType.Files && !string.IsNullOrWhiteSpace(Configuration.ExternalDocumentReferenceListFile?.Value))
+            if (providerType == ProviderType.Files && !string.IsNullOrWhiteSpace(context.ExternalDocumentReferenceListFile?.Value))
             {
                 Log.Debug($"Using the {nameof(ExternalDocumentReferenceFileProvider)} provider for the files workflow.");
                 return true;
@@ -48,7 +49,7 @@ namespace Microsoft.Sbom.Api.Providers.FilesProviders
 
         protected override (ChannelReader<string> entities, ChannelReader<FileValidationResult> errors) GetSourceChannel()
         {
-            if (Configuration.ExternalDocumentReferenceListFile?.Value == null)
+            if (context.ExternalDocumentReferenceListFile?.Value == null)
             {
                 var emptyList = Channel.CreateUnbounded<string>();
                 emptyList.Writer.Complete();
@@ -57,7 +58,7 @@ namespace Microsoft.Sbom.Api.Providers.FilesProviders
                 return (emptyList, errors);
             }
 
-            return listWalker.GetFilesFromList(Configuration.ExternalDocumentReferenceListFile.Value);
+            return listWalker.GetFilesFromList(context.ExternalDocumentReferenceListFile.Value);
         }
 
         protected override (ChannelReader<JsonDocWithSerializer> results, ChannelReader<FileValidationResult> errors) WriteAdditionalItems(IList<ISbomConfig> requiredConfigs)

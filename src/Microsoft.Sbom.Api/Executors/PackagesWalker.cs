@@ -17,8 +17,8 @@ namespace Microsoft.Sbom.Api.Executors
     /// </summary>
     public class PackagesWalker : ComponentDetectionBaseWalker
     {
-        public PackagesWalker(ILogger log, ComponentDetectorCachedExecutor componentDetector, IConfiguration configuration, ISbomConfigProvider sbomConfigs)
-            : base(log, componentDetector, configuration, sbomConfigs)
+        public PackagesWalker(ILogger log, ComponentDetectorCachedExecutor componentDetector, IConfiguration configuration, ISbomConfigProvider sbomConfigs, IContext context)
+            : base(log, componentDetector, configuration, sbomConfigs, context)
         {
         }
 

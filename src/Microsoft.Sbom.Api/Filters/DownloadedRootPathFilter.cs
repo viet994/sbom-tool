@@ -20,6 +20,7 @@ namespace Microsoft.Sbom.Api.Filters
         private readonly IConfiguration configuration;
         private readonly IFileSystemUtils fileSystemUtils;
         private readonly ILogger logger;
+        private readonly IContext context;
 
         private bool skipValidation;
         private HashSet<string> validPaths;
@@ -27,11 +28,15 @@ namespace Microsoft.Sbom.Api.Filters
         public DownloadedRootPathFilter(
             IConfiguration configuration,
             IFileSystemUtils fileSystemUtils,
-            ILogger logger)
+            ILogger logger,
+            IContext context)
         {
             this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
             this.fileSystemUtils = fileSystemUtils ?? throw new ArgumentNullException(nameof(fileSystemUtils));
             this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            this.context = context;
+
+            Init();
         }
 
         /// <summary>
@@ -75,14 +80,14 @@ namespace Microsoft.Sbom.Api.Filters
             logger.Verbose("Adding root path filter valid paths");
             skipValidation = true;
 
-            if (configuration.RootPathFilter != null && !string.IsNullOrWhiteSpace(configuration.RootPathFilter.Value))
+            if (context.RootPathFilter != null && !string.IsNullOrWhiteSpace(context.RootPathFilter.Value))
             {
                 skipValidation = false;
                 validPaths = new HashSet<string>();
-                string[] relativeRootPaths = configuration.RootPathFilter.Value.Split(';');
+                string[] relativeRootPaths = context.RootPathFilter.Value.Split(';');
 
                 validPaths.UnionWith(relativeRootPaths.Select(r =>
-                        new FileInfo(fileSystemUtils.JoinPaths(configuration.BuildDropPath.Value, r))
+                        new FileInfo(fileSystemUtils.JoinPaths(context.BuildDropPath.Value, r))
                                 .FullName));
 
                 foreach (var validPath in validPaths)

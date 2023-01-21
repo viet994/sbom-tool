@@ -13,16 +13,16 @@ namespace Microsoft.Sbom.Api.Output
     /// </summary>
     public class FileOutputWriter : IOutputWriter
     {
-        private readonly IConfiguration configuration;
+        private readonly IContext context;
 
-        public FileOutputWriter(IConfiguration configuration)
+        public FileOutputWriter(IContext context)
         {
-            this.configuration = configuration;
+            this.context = context;
         }
 
         public async Task WriteAsync(string output)
         {
-            using FileStream fs = new FileStream(configuration.OutputPath.Value, FileMode.Create);
+            using FileStream fs = new FileStream(context.OutputPath.Value, FileMode.Create);
             using StreamWriter outputFile = new StreamWriter(fs);
             await outputFile.WriteAsync(output);
         }

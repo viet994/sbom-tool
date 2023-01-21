@@ -18,6 +18,7 @@ namespace Microsoft.Sbom.Api.Tests.Config
     {
         private readonly Mock<IManifestConfigHandler> configHandler;
         private readonly Configuration config;
+        private readonly Mock<IContext> contextMock;
         private readonly Mock<ILogger> logger;
         private readonly Mock<IRecorder> recorder;
         private readonly LocalMetadataProvider localMetadataProvider;
@@ -25,17 +26,16 @@ namespace Microsoft.Sbom.Api.Tests.Config
         public SBOMConfigTests()
         {
             configHandler = new Mock<IManifestConfigHandler>();
-            config = new Configuration
-            {
-                PackageName = new ConfigurationSetting<string>("the-package-name"),
-                PackageVersion = new ConfigurationSetting<string>("the-package-version"),
-                NamespaceUriUniquePart = new ConfigurationSetting<string>("some-custom-value-here"),
-                NamespaceUriBase = new ConfigurationSetting<string>("http://sbom.microsoft")
-            };
+            config = new Configuration();
+            contextMock = new Mock<IContext>();
+            contextMock.SetupGet(c => c.PackageName).Returns(new ConfigurationSetting<string>("the-package-name"));
+            contextMock.SetupGet(c => c.PackageVersion).Returns(new ConfigurationSetting<string>("the-package-version"));
+            contextMock.SetupGet(c => c.NamespaceUriUniquePart).Returns(new ConfigurationSetting<string>("some-custom-value-here"));
+            contextMock.SetupGet(c => c.NamespaceUriBase).Returns(new ConfigurationSetting<string>("http://sbom.microsoft"));
 
             logger = new Mock<ILogger>();
             recorder = new Mock<IRecorder>();
-            localMetadataProvider = new LocalMetadataProvider(config);
+            localMetadataProvider = new LocalMetadataProvider(config, contextMock.Object);
         }
 
         [TestMethod]
@@ -59,7 +59,7 @@ namespace Microsoft.Sbom.Api.Tests.Config
                 BuildEnvironmentName = "the-build-envsdfgsdg"
             };
 
-            var sbomApiMetadataProvider = new SBOMApiMetadataProvider(sbomMetadata, config);
+            var sbomApiMetadataProvider = new SBOMApiMetadataProvider(sbomMetadata, config, contextMock.Object);
             var metadataProviders = new IMetadataProvider[] { localMetadataProvider, sbomApiMetadataProvider };
             var sbomConfigs = CreateSbomConfigs(metadataProviders);
 
@@ -78,7 +78,7 @@ namespace Microsoft.Sbom.Api.Tests.Config
                 BuildEnvironmentName = null
             };
 
-            var sbomApiMetadataProvider = new SBOMApiMetadataProvider(sbomMetadata, config);
+            var sbomApiMetadataProvider = new SBOMApiMetadataProvider(sbomMetadata, config, contextMock.Object);
             var metadataProviders = new IMetadataProvider[] { localMetadataProvider, sbomApiMetadataProvider };
             var sbomConfigs = CreateSbomConfigs(metadataProviders);
 
